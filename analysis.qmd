@@ -2,7 +2,12 @@
 title: "Lessons of the Past data analysis"
 author: Nick Gauthier
 date: "Last updated: `r Sys.Date()`"
-format: pdf
+format: 
+  typst:
+    toc: true
+    margin:
+      x: 1in
+      y: 1in
 editor: visual
 ---
 
@@ -20,6 +25,7 @@ library(gtsummary) # for summary tables
 library(labelled) # for informative variable names
 
 theme_set(theme_bw()) # set default plot theme to black and white
+theme_gtsummary_compact() # set default theme for tables
 
 # how many digits to percentages to
 digits <- 0
@@ -71,7 +77,7 @@ periods <- c('Pleistocene',
 
 Note: This analysis pulls data directly from the Google Sheet [here](https://docs.google.com/spreadsheets/d/1Oz1VSN4xjyeRdV7C8fGSPQ_ni6FevMxL0EAji3x9Gp0/edit?gid=1797047085#gid=1797047085), so the plots should update automatically as the spreadsheet changes.
 
-```{r}
+```{r preprocessing}
 # should update so we save the named list of periods in "periods" right away
 dat <- dat_raw |>
   rename(date = `DATE (BY YEAR AFTER 1975)`, 
@@ -118,12 +124,11 @@ dat <- dat_raw |>
   #set_value_labels(agw = c('Uses AGW' = 'Yes', 'Does not use AGW' = 'No'))
 ```
 
-
 ## Simple Questions
 
-1. How many publications do we have from each discipline?
+### 1.  How many publications do we have from each discipline?
 
-```{r}
+```{r tbl1}
 dat |>
   select(discipline) |>
   tbl_summary() |>
@@ -131,9 +136,9 @@ dat |>
   bold_labels()
 ```
 
-2. How many publications are from each region?
+### 2.  How many publications are from each region?
 
-```{r}
+```{r tbl2}
 dat |>
   select(region) |>
   tbl_summary() |>
@@ -141,10 +146,11 @@ dat |>
   bold_labels()
 ```
 
-3. How many publications are from each period?
+### 3.  How many publications are from each period?
 
 Note that N is larger here because each paper can cover multiple time periods.
-```{r}
+
+```{r tbl3}
 dat |>
   select(period) |>
   mutate(period = map(period, str_split, ',')) |>
@@ -153,13 +159,13 @@ dat |>
   mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
   tbl_summary(label = list(period = 'Period')) |>
   modify_header(label = "**Variable**") |>
-  bold_labels()
+  bold_labels() |>
+  as_gt()
 ```
 
+### 4.  How many of our publications use methods that are quantitative, statistical, both, or neither?
 
-4. How many of our publications use methods that are quantitative, statistical, both, or neither?
-
-```{r}
+```{r tbl4}
 dat |>
   select(method) |>
   tbl_summary() |>
@@ -167,9 +173,9 @@ dat |>
   bold_labels()
 ```
 
-5. How many of our publications are original research, a literature review, or a response article?
+### 5.  How many of our publications are original research, a literature review, or a response article?
 
-```{r}
+```{r tbl5}
 dat |>
   select(type) |>
   tbl_summary() |>
@@ -177,9 +183,9 @@ dat |>
   bold_labels()
 ```
 
-6. How many of our publications are books, "book/theses" (meaning PhD theses), articles, or "chapter/articles" (meaning book chapters)?
+### 6.  How many of our publications are books, "book/theses" (meaning PhD theses), articles, or "chapter/articles" (meaning book chapters)?
 
-```{r}
+```{r tbl6}
 dat |>
   select(pub_type) |>
   tbl_summary() |>
@@ -187,9 +193,9 @@ dat |>
   bold_labels()
 ```
 
-7. How many of our publications use AGW to argue for their importance?
+### 7.  How many of our publications use AGW to argue for their importance?
 
-```{r}
+```{r tbl7}
 dat |>
   select(agw) |>
   tbl_summary() |>
@@ -197,9 +203,9 @@ dat |>
   bold_labels()
 ```
 
-8. How many of our publications include lessons for the present/future?
+### 8.  How many of our publications include lessons for the present/future?
 
-```{r}
+```{r tbl8}
 dat |>
   select(rec) |>
   tbl_summary() |>
@@ -207,13 +213,13 @@ dat |>
   bold_labels()
 ```
 
-9. What types of lessons or recommendations are most common?
+### 9.  What types of lessons or recommendations are most common?
 
 Also trickier because of multiple responses per row. I did it this way, but Dagomar may want "For all questions involved lessons, I converted "1,2", "1,3" and "2,3" into 4, and "1,2,3" into "5.""
 
 So may want to double check this and the next one to use rec_type, or rec_type names
 
-```{r}
+```{r tbl9}
 dat |>
   pull(rec_type) |> 
   str_split(',') |>
@@ -224,10 +230,9 @@ dat |>
   mutate(rec_type = factor(rec_types[as.numeric(rec_type)], levels = rec_types))
 ```
 
+### 10. Among lessons (so leaving out "none of the above") what types of lessons or recommendations are most common?
 
-10. Among lessons (so leaving out "none of the above") what types of lessons or recommendations are most common?
-
-```{r}
+```{r tbl10}
 dat |>
   pull(rec_type) |> 
   str_split(',') |>
@@ -238,9 +243,9 @@ dat |>
   mutate(rec_type = factor(rec_types[as.numeric(rec_type)], levels = rec_types)) 
 ```
 
-11. How many of our publications in each discipline use methods that are quantitative, qualitative, both, or neither?
+### 11. How many of our publications in each discipline use methods that are quantitative, qualitative, both, or neither?
 
-```{r}
+```{r tbl11}
 dat |>
   select(discipline, method) |>
   tbl_summary(by = method) |>
@@ -248,19 +253,18 @@ dat |>
   bold_labels()
 ```
 
+### 12. How many publications that are *not* in Paleoclimatology/Historical Climatology use Quantitative Analysis?
 
-12. How many publications that are *not* in Paleoclimatology/Historical Climatology use Quantitative Analysis? 
-
-```{r}
+```{r tbl12}
 dat |>
   filter(discipline != 'Paleoclimatology',
          method %in% c('Both', 'Quantitative')) |>
   nrow()
 ```
 
-13. What percentage of publications in every method consider each region?
+### 13. What percentage of publications in every method consider each region?
 
-```{r}
+```{r tbl13}
 dat |>
   select(region, method) |>
   tbl_summary(by = method) |>
@@ -269,12 +273,11 @@ dat |>
   add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
-
 ### Figures for simple questions
 
-Figure 1: a chart/graph showing answers to questions 1-3. 
+#### Figure 1: a chart/graph showing answers to questions 1-3.
 
-```{r fig.width = 10.5, fig.asp = .3}
+```{r fig1, fig.width = 10.5, fig.asp = .3}
 a <- dat |>
   count(discipline) |>
   ggplot(aes(reorder(discipline, n), n)) +
@@ -311,9 +314,10 @@ c <- dat |>
 
 a + b + c
 ```
-Figure 2: a chart/graph showing answers to questions 4-6. 
 
-```{r fig.width = 10.5, fig.asp = .3}
+#### Figure 2: a chart/graph showing answers to questions 4-6.
+
+```{r fig2, fig.width = 10.5, fig.asp = .3}
 d <- dat |>
   count(method) |>
   ggplot(aes(reorder(method, n), n)) +
@@ -342,9 +346,9 @@ f <- dat |>
 d + e + f
 ```
 
-Figure 3: a chart/graph showing answers to questions 7-9.
+#### Figure 3: a chart/graph showing answers to questions 7-9.
 
-```{r fig.width = 9, fig.asp = .3}
+```{r fig3, fig.width = 9, fig.asp = .3}
 g <- dat |>
   count(agw) |>
   ggplot(aes(reorder(agw, n), n)) +
@@ -384,13 +388,9 @@ i <- dat |>
 g + h + i
 ```
 
-```{r}
-knitr::knit_exit()
-```
-
 ## Compound Questions
 
-1a. What percentage of publications in each discipline use AGW to argue for their importance?
+### 1a. What percentage of publications in each discipline use AGW to argue for their importance?
 
 ```{r}
 dat |>
@@ -401,7 +401,7 @@ dat |>
   add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
-1b. What percentage of publications in each method use AGW to argue for their importance?
+### 1b. What percentage of publications in each method use AGW to argue for their importance?
 
 ```{r}
 dat |>
@@ -412,7 +412,7 @@ dat |>
   add_p()
 ```
 
-2a. What percentage of publications in Paleoclimatology/Historical Climatology use modern global warming to argue for their significance? What percentage of publications in all *other* disciplines do the same? 
+### 2a. What percentage of publications in Paleoclimatology/Historical Climatology use modern global warming to argue for their significance? What percentage of publications in all *other* disciplines do the same?
 
 ```{r}
 dat |>
@@ -424,9 +424,10 @@ dat |>
   add_p()
 ```
 
-2b. What percentage of publications using quantitative analysis use modern global warming to argue for their significance? And what percentage of publications using the other methods do the same?
+### 2b. What percentage of publications using quantitative analysis use modern global warming to argue for their significance? And what percentage of publications using the other methods do the same?
 
 Note that here we again combine Quantitative and Both categories.
+
 ```{r}
 dat |>
   mutate(quant = if_else(method %in% c('Quantitative', 'Both'), 'Quantitative', 'Other Methods')) |>
@@ -437,7 +438,7 @@ dat |>
   add_p()
 ```
 
-3a. What percentage of publications from each region use AGW to argue for their importance? 
+3a. What percentage of publications from each region use AGW to argue for their importance?
 
 ```{r}
 dat |>
@@ -445,17 +446,20 @@ dat |>
   tbl_summary(by = region) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p()
+  add_p() |>
+  as_gt()
 
 dat |>
   select(region, agw) |>
   tbl_summary(by = agw) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p()
+  add_p() |>
+  as_gt()
 ```
 
-3b. What percentage of publications from each period use AGW to argue for their importance? 
+3b. What percentage of publications from each period use AGW to argue for their importance?
+
 ```{r}
 dat |>
   select(period, agw) |>
@@ -466,9 +470,9 @@ dat |>
   tbl_summary(by = period) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p()
+  add_p() |>
+  as_gt()
 ```
-
 
 This analysis the sums are 100 by AGW
 
@@ -558,7 +562,7 @@ dat |>
        fill = "AGW Use")
 ```
 
-5. What percentage of publications that include lessons come from each discipline? What percentage comes from each method?
+5.  What percentage of publications that include lessons come from each discipline? What percentage comes from each method?
 
 ```{r}
 dat |>
@@ -566,9 +570,9 @@ dat |>
   tbl_summary(by = rec) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
+  as_gt()
 ```
-
 
 6a. What percentage of publications in each discipline include lessons for the present/future?
 
@@ -578,7 +582,8 @@ dat |>
   tbl_summary(by = discipline) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
+  as_gt()
 ```
 
 6b. What percentage of publications in each method include lessons for the present/future?
@@ -589,7 +594,8 @@ dat |>
   tbl_summary(by = method) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p()
+  add_p() |>
+  as_gt()
 ```
 
 ```{r}
@@ -622,7 +628,6 @@ dat |>
        fill = "Lessons for Present/Future")
 ```
 
-
 ```{r}
 #What percentage of publications from each region and period include lessons for the present/future?
 
@@ -637,7 +642,7 @@ dat |>
        fill = "Lessons for Present/Future")
 ```
 
-7. What percentage of publications that include lessons focus on each region and period?
+7.  What percentage of publications that include lessons focus on each region and period?
 
 ```{r}
 dat |>
@@ -645,10 +650,12 @@ dat |>
   tbl_summary(by = rec) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
+  as_gt()
 ```
 
 There might be better ways do this, need to think through how multi-counting papers impacts significance!
+
 ```{r}
 dat |>
   select(period, rec) |>
@@ -659,10 +666,12 @@ dat |>
   tbl_summary(by = rec) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p()
+  add_p() |>
+  as_gt()
 ```
 
 (this is a slightly different version, like above we need to consider how best to handle multiple periods)
+
 ```{r}
 dat |>
   filter(rec == 'Yes') |> #195
@@ -684,7 +693,8 @@ dat |>
   tbl_summary(by = region) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
+  as_gt()
 ```
 
 8b. What percentage of publications from each period include lessons for the present/future?
@@ -699,7 +709,8 @@ dat |>
   tbl_summary(by = period) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p()
+  add_p() |>
+  as_gt()
 ```
 
 9a. What percentage of publications in each discipline include distinct types of recommendation?
@@ -710,7 +721,8 @@ dat |>
   tbl_summary(by = discipline) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
+  as_gt()
 ```
 
 9b. What percentage of publications in each method include distinct types of recommendation?
@@ -721,17 +733,20 @@ dat |>
   tbl_summary(by = method) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
+  as_gt()
 ```
 
 10a. What percentage of publications from each region include distinct types of recommendation?
+
 ```{r}
 dat |>
   select(region, rec_type) |>
   tbl_summary(by = region) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
+  as_gt()
 ```
 
 10b. What percentage of publications from each period include distinct types of recommendation?
@@ -746,20 +761,21 @@ dat |>
   tbl_summary(by = period) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
+  as_gt()
 ```
 
-
 11. What percentage of publications that use AGW to argue for their importance include lessons for the present/future?
+
 ```{r}
 dat |>
   select(agw, rec) |>
   tbl_summary(by = agw) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p()
+  add_p() |>
+  as_gt()
 ```
-
 
 ```{r}
 dat |>
@@ -773,6 +789,7 @@ dat |>
 ```
 
 What percentage of palaeosciences/history/literature, etc. articles that use AGW to argue for their importance include lessons for the present/future?
+
 ```{r}
 dat |>
     filter(agw == 'Yes') |>
@@ -780,7 +797,8 @@ dat |>
   tbl_summary(by = discipline) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
+  as_gt()
 ```
 
 ```{r}
@@ -797,6 +815,7 @@ dat |>
 ```
 
 Broken down by region:
+
 ```{r}
 dat |>
   filter(agw == 'Yes') |>
@@ -804,9 +823,9 @@ dat |>
   tbl_summary(by = region) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
+  as_gt()
 ```
-
 
 ```{r}
 dat |>
@@ -834,7 +853,8 @@ dat |>
   tbl_summary(by = period) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p()
+  add_p() |>
+  as_gt()
 ```
 
 ```{r}
@@ -850,7 +870,8 @@ dat |>
   tbl_summary(by = method) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p()
+  add_p() |>
+  as_gt()
 ```
 
 ```{r}
@@ -866,6 +887,7 @@ dat |>
 ```
 
 Broken down by publication type:
+
 ```{r}
 dat |>
   filter(agw == 'Yes') |>
@@ -873,7 +895,8 @@ dat |>
   tbl_summary(by = type) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
+  as_gt()
 ```
 
 ```{r}
@@ -897,9 +920,9 @@ dat |>
   tbl_summary(by = pub_type) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p()
+  add_p() |>
+  as_gt()
 ```
-
 
 ```{r}
 dat |>
@@ -916,6 +939,7 @@ dat |>
 12. Are there journals which are particularly correlated with including lessons for the present/future?
 
 Of the journals with 10 or more entries in our database, the following journals have the highest proportion of papers with recommendations for the present or future. However, only Climate and American Literature has a significantly higher proportion of recommendations than the average for all papers, after correcting for multiple comparisons.
+
 ```{r}
 prop <- dat |>
   select(rec) |>
@@ -968,6 +992,7 @@ dat |>
 ```
 
 ## Compund figures
+
 ```{r}
 dat |>
   ggplot(aes(discipline)) +
@@ -998,13 +1023,13 @@ dat |>
        fill = "AGW Use")
 ```
 
-
 ## Regression
 
 ```{r}
 # should adjust baseline and try to incorporate more vars
 dat2 <- mutate(dat, rec_bin = rec == 'Yes')
-m1 <- glm(rec_bin ~ method + region + agw,
+m1 <- glm(rec_bin ~ method + region + agw + discipline,
           family = binomial, data = dat2)
-tbl_regression(m1)
+tbl_regression(m1) |>
+  as_gt()
 ```
