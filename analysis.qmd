@@ -309,6 +309,29 @@ c <- dat |>
 
 a + b + c
 ```
+Here's another possible visualization, a waffle plot, just for reference.
+```{r}
+library(waffle)
+dat |>
+  count(discipline) |>
+  ggplot(aes(fill = discipline, values = n)) +
+  geom_waffle(make_proportional = TRUE) +
+  scale_fill_brewer(palette = 'Spectral')
+  theme_void()
+```
+And likewise, a treemap.
+```{r}
+library(treemapify)
+dat |>
+  count(discipline) |>
+  ggplot(aes(area = n, fill = discipline, label = discipline)) +
+  geom_treemap() +
+    geom_treemap_text(fontface = "italic", colour = "black", place = "centre",
+                    grow = TRUE) +
+  scale_fill_brewer(palette = 'Spectral')
+  theme_void()
+```
+
 
 #### Figure 2: a chart/graph showing answers to questions 4-6.
 
@@ -438,14 +461,6 @@ dat |>
 ```{r}
 dat |>
   select(region, agw) |>
-  tbl_summary(by = region) |>
-  modify_header(label = "**Variable**") |>
-  bold_labels() |>
-  add_p() |>
-  as_gt()
-
-dat |>
-  select(region, agw) |>
   tbl_summary(by = agw) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
@@ -514,6 +529,18 @@ mutate(total = sum(n),
   filter(agw == 'Yes') |>
   select(period, percent) |>
   ungroup()
+```
+
+### 4. What percentage of publications that cover each region use global warming to argue for their significance?
+
+```{r}
+dat |>
+  select(region, agw) |>
+  tbl_summary(by = region) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p() |>
+  as_gt()
 ```
 
 
@@ -832,144 +859,332 @@ dat |>
   arrange(-pct, -n_tot)
 ```
 
-## Compund figures
+## Figures for compound questions
 
-```{r}
-dat |>
+### Figure 1: a chart/graph showing answers to questions 1-2. 
+
+```{r fig.width = 10.5, fig.asp = .3}
+a <- dat |>
   ggplot(aes(discipline)) +
   geom_bar(aes(fill = agw), position = "fill") +
-  theme_minimal() +
+    scale_fill_grey(start = 0.8, end = 0.2) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Percentage of Publications Using AGW to Argue for Importance by Discipline",
-       x = "Discipline",
+  labs(title = "Discipline",
+       x = "",
        y = "Percentage of Publications",
-       fill = "AGW Use")
+       fill = "Use AGW")
 
-dat |>
+b <- dat |>
   ggplot(aes(method)) +
   geom_bar(aes(fill = agw), position = "fill") +
-  theme_minimal() +
-  labs(title = "Percentage of Publications Using AGW to Argue for Importance by Method",
-       x = "Method",
-       y = "Percentage of Publications",
-       fill = "AGW Use")
+  scale_fill_grey(start = 0.8, end = 0.2) +
+  labs(title = "Method",
+       x = "",
+       y = "",
+       fill = "Use AGW")
 
-dat |>
-  ggplot(aes(type)) +
-  geom_bar(aes(fill = agw), position = "fill") +
-  theme_minimal() +
-  labs(title = "Percentage of Publications Using AGW to Argue for Importance by Method",
-       x = "Method",
-       y = "Percentage of Publications",
-       fill = "AGW Use")
+a + b + plot_layout(guides = 'collect')
 ```
+Here's a different way to plot the same data:
 
-```{r}
-dat |>
-  filter(agw == 'Yes') |>
+```{r fig.width = 10.5, fig.asp = .3}
+a <- dat |>
+  ggplot(aes(discipline)) +
+  geom_bar(aes(fill = agw)) +
+    scale_fill_grey(start = 0.8, end = 0.2) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Discipline",
+       x = "",
+       y = "Percentage of Publications",
+       fill = "Use AGW")
+
+b <- dat |>
   ggplot(aes(method)) +
-  geom_bar(aes(fill = rec), position = "fill") +
-  theme_minimal() +
-  labs(title = "Percentage of Publications that Use AGW for Justification Including Lessons for the Present/Future by Method",
-       x = "Method",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
+  geom_bar(aes(fill = agw)) +
+  scale_fill_grey(start = 0.8, end = 0.2) +
+  labs(title = "Method",
+       x = "",
+       y = "",
+       fill = "Use AGW")
+
+a + b + plot_layout(guides = 'collect')
 ```
 
-```{r}
-#What percentage of publications from each region and period include lessons for the present/future?
+### Figure 2: a chart/graph showing answers to questions 3-4. 
 
-dat |>
+
+```{r fig.width = 10.5, fig.asp = .3}
+c <- dat |>
   ggplot(aes(region)) +
-  geom_bar(aes(fill = rec), position = "fill") +
+  geom_bar(aes(fill = agw), position = "fill") +
+    scale_fill_grey(start = 0.8, end = 0.2) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Percentage of Publications Including Lessons for the Present/Future by Region",
-       x = "Region",
+  labs(title = "Region",
+       x = "",
        y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
-```
+       fill = "Use AGW")
 
-```{r}
-dat |>
-  filter(agw == 'Yes') |>
-  ggplot(aes(pub_type)) +
-  geom_bar(aes(fill = rec), position = "fill") +
-  theme_minimal() +
-  labs(title = "Percentage of Publications that Use AGW for Justification Including Lessons for the Present/Future by Journal",
-       x = "Journal",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
-```
-
-```{r}
-dat |>
-  ggplot(aes(discipline)) +
-  geom_bar(aes(fill = rec), position = "fill") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Percentage of Publications Including Lessons for the Present/Future by Discipline",
-       x = "Discipline",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
-
-dat |>
-  ggplot(aes(method)) +
-  geom_bar(aes(fill = rec), position = "fill") +
-  theme_minimal() +
-  labs(title = "Percentage of Publications Including Lessons for the Present/Future by Method",
-       x = "Method",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
-
-dat |>
-  ggplot(aes(type)) +
-  geom_bar(aes(fill = rec), position = "fill") +
-  theme_minimal() +
-  labs(title = "Percentage of Publications Including Lessons for the Present/Future by Method",
-       x = "Method",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
-```
-
-```{r}
-dat |>
-  filter(agw == 'Yes') |>
-  ggplot(aes(type)) +
-  geom_bar(aes(fill = rec), position = "fill") +
-  theme_minimal() +
-  labs(title = "Percentage of Publications that Use AGW for Justification Including Lessons for the Present/Future by Publication Type",
-       x = "Publication Type",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
-```
-
-```{r}
-dat |>
+d <- dat |>
   select(period, agw) |>
   unnest(period) |>
   ggplot(aes(period)) +
   geom_bar(aes(fill = agw), position = "fill") +
+    scale_fill_grey(start = 0.8, end = 0.2) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Percentage of Publications Using AGW to Argue for Importance by Period",
-       x = "Period",
+  labs(title = "Period",
+       x = "",
        y = "Percentage of Publications",
-       fill = "AGW Use")
+       fill = "Use AGW")
+
+c + d + plot_layout(guides = 'collect')
 ```
+```{r fig.width = 10.5, fig.asp = .3}
+
+c <- dat |>
+  ggplot(aes(region)) +
+  geom_bar(aes(fill = agw)) +
+    scale_fill_grey(start = 0.8, end = 0.2, guide = NULL) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Region",
+       x = "",
+       y = "Percentage of Publications",
+       fill = "Use AGW")
+
+d <- dat |>
+  select(period, agw) |>
+  unnest(period) |>
+  ggplot(aes(period)) +
+  geom_bar(aes(fill = agw)) +
+    scale_fill_grey(start = 0.8, end = 0.2) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Period",
+       x = "",
+       y = "Percentage of Publications",
+       fill = "Use AGW")
+
+c + d + plot_layout(guides = 'collect')
+```
+
+### Figure 3: a chart/graph showing answers to questions 5-6. 
+
+Exploring other ways to visualize this:
 ```{r}
 dat |>
-  filter(agw == 'Yes') |>
-  ggplot(aes(region)) +
-  geom_bar(aes(fill = rec), position = "fill") +
+  ggplot(aes(rec)) +
+  geom_bar(aes(fill = discipline)) +
+    scale_fill_brewer(palette = 'Spectral') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Includes lessons or recommendations",
+       x = "",
+       y = "Publications",
+       fill = "Discipline")
+
+dat |>
+  ggplot(aes(rec)) +
+  geom_bar(aes(fill = discipline), position = 'fill') +
+    scale_fill_brewer(palette = 'Spectral') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Includes lessons or recommendations",
+       x = "",
+       y = "Proportion",
+       fill = "Discipline")
+
+dat |>
+  filter(rec == 'Yes') |>
+  count(discipline) |>
+  ggplot(aes(area = n, fill = discipline, label = discipline)) +
+  geom_treemap(color = 'white') +
+    geom_treemap_text(fontface = "italic", colour = "black", place = "centre",
+                    grow = FALSE) +
+  scale_fill_brewer(palette = 'Spectral', guide = NULL) +
+  labs(title = "Includes lessons or recommendations",
+       fill = "Discipline") +
+  coord_fixed()
+```
+[Maybe a donut chart would be another option for these?](https://r-charts.com/part-whole/donut-chart/). Just need to avoid pie charts . . .
+
+```{r}
+dat |>
+  ggplot(aes(rec)) +
+  geom_bar(aes(fill = method)) +
+    scale_fill_brewer(palette = 'Spectral') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Includes lessons or recommendations",
+       x = "",
+       y = "Publications",
+       fill = "method")
+
+dat |>
+  ggplot(aes(rec)) +
+  geom_bar(aes(fill = method), position = 'fill') +
+    scale_fill_brewer(palette = 'Spectral') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Includes lessons or recommendations",
+       x = "",
+       y = "Proportion",
+       fill = "method")
+
+dat |>
+  filter(rec == 'Yes') |>
+  count(method) |>
+  ggplot(aes(area = n, fill = method, label = method)) +
+  geom_treemap(color = 'white') +
+    geom_treemap_text(fontface = "italic", colour = "black", place = "centre",
+                    grow = FALSE) +
+  scale_fill_brewer(palette = 'Spectral', guide = NULL) +
+  labs(title = "Includes lessons or recommendations",
+       fill = "method") +
+  coord_fixed()
+```
+```{r fig.width = 10.5, fig.asp = .3}
+e <- dat |>
+  ggplot(aes(discipline)) +
+  geom_bar(aes(fill = rec)) +
+    scale_fill_grey(start = 0.8, end = 0.2, guide = NULL) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Percentage of Publications that Use AGW for Justification Including Lessons for the Present/Future by Region",
-       x = "Region",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
+  labs(title = "Discipline",
+       x = "",
+       y = "Publications",
+       fill = "Recommendations")
+
+f <- dat |>
+  ggplot(aes(method)) +
+  geom_bar(aes(fill = rec)) +
+    scale_fill_grey(start = 0.8, end = 0.2) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Method",
+       x = "",
+       y = "",
+       fill = "Recommendations")
+
+e + f + plot_layout(guides = 'collect')
 ```
+
+```{r fig.width = 10.5, fig.asp = .3}
+e <- dat |>
+  ggplot(aes(discipline)) +
+  geom_bar(aes(fill = rec), position = 'fill') +
+    scale_fill_grey(start = 0.8, end = 0.2, guide = NULL) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Discipline",
+       x = "",
+       y = "Publications",
+       fill = "Recommendations")
+
+f <- dat |>
+  ggplot(aes(method)) +
+  geom_bar(aes(fill = rec), position = 'fill') +
+    scale_fill_grey(start = 0.8, end = 0.2) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Method",
+       x = "",
+       y = "",
+       fill = "Recommendations")
+
+e + f + plot_layout(guides = 'collect')
+```
+
+### Figure 4: a chart/graph showing answers to question 7.
+```{r fig.width = 10.5, fig.asp = .3}
+e <- dat |>
+  ggplot(aes(region)) +
+  geom_bar(aes(fill = rec)) +
+    scale_fill_grey(start = 0.8, end = 0.2, guide = NULL) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Region",
+       x = "",
+       y = "Publications",
+       fill = "Recommendations")
+
+f <- dat |>
+  select(rec, period) |>
+  unnest(period) |>
+  ggplot(aes(period)) +
+  geom_bar(aes(fill = rec)) +
+    scale_fill_grey(start = 0.8, end = 0.2) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Period",
+       x = "",
+       y = "",
+       fill = "Recommendations")
+
+e + f + plot_layout(guides = 'collect')
+```
+
+```{r fig.width = 10.5, fig.asp = .3}
+e <- dat |>
+  ggplot(aes(region)) +
+  geom_bar(aes(fill = rec), position = 'fill') +
+    scale_fill_grey(start = 0.8, end = 0.2, guide = NULL) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Region",
+       x = "",
+       y = "Publications",
+       fill = "Recommendations")
+
+f <- dat |>
+  select(rec, period) |>
+  unnest(period) |>
+  ggplot(aes(period)) +
+  geom_bar(aes(fill = rec), position = 'fill') +
+    scale_fill_grey(start = 0.8, end = 0.2) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Period",
+       x = "",
+       y = "",
+       fill = "Recommendations")
+
+e + f + plot_layout(guides = 'collect')
+```
+
+
+### Figure 5: a chart/ graph showing answers to question 8.
+
+```{r fig.width = 10.5, fig.asp = .3}
+e <- dat |>
+  ggplot(aes(region)) +
+  geom_bar(aes(fill = rec)) +
+    scale_fill_grey(start = 0.8, end = 0.2, guide = NULL) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Region",
+       x = "",
+       y = "Publications",
+       fill = "Recommendations")
+
+f <- dat |>
+  select(period, rec) |>
+  unnest(period) |>
+  ggplot(aes(period)) +
+  geom_bar(aes(fill = rec)) +
+    scale_fill_grey(start = 0.8, end = 0.2) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Period",
+       x = "",
+       y = "",
+       fill = "Recommendations")
+
+e + f + plot_layout(guides = 'collect')
+```
+
 ## Regression
+
+Testing different way to look at the data through logistic regression. How well do some of our categories do at predicting whether a paper includes recommendations for the future or not?
+
+This is just a test, but we can explore or expand this in various ways if useful.
 
 ```{r}
 # should adjust baseline and try to incorporate more vars
