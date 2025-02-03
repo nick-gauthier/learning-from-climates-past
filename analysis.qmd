@@ -2,9 +2,7 @@
 title: "Lessons of the Past data analysis"
 author: Nick Gauthier
 date: "Last updated: `r Sys.Date()`"
-format:
-  html:
-    embed-resources: true
+format: pdf
 editor: visual
 ---
 
@@ -18,6 +16,8 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 library(tidyverse) # for data manipulation
 library(googlesheets4) # for pulling data from Google Sheets
 library(patchwork) # for combining plots
+library(gtsummary) # for summary tables
+library(labelled) # for informative variable names
 
 theme_set(theme_bw()) # set default plot theme to black and white
 
@@ -26,11 +26,8 @@ digits <- 0
 
 # read the Google Sheet, done here so we only do it once per session
 dat_raw <- read_sheet("https://docs.google.com/spreadsheets/d/1Oz1VSN4xjyeRdV7C8fGSPQ_ni6FevMxL0EAji3x9Gp0/edit?gid=1797047085#gid=1797047085") 
-```
 
-Note: This analysis pulls data directly from the Google Sheet [here](https://docs.google.com/spreadsheets/d/1Oz1VSN4xjyeRdV7C8fGSPQ_ni6FevMxL0EAji3x9Gp0/edit?gid=1797047085#gid=1797047085), so the plots should update automatically as the spreadsheet changes.
-
-```{r}
+# category names for use elsewhere
 discipline_names <- c('Archaeology', 
                         'Economics', 
                         'Literature', 
@@ -72,7 +69,10 @@ periods <- c('Pleistocene',
              'Present')
 ```
 
+Note: This analysis pulls data directly from the Google Sheet [here](https://docs.google.com/spreadsheets/d/1Oz1VSN4xjyeRdV7C8fGSPQ_ni6FevMxL0EAji3x9Gp0/edit?gid=1797047085#gid=1797047085), so the plots should update automatically as the spreadsheet changes.
+
 ```{r}
+# should update so we save the named list of periods in "periods" right away
 dat <- dat_raw |>
   rename(date = `DATE (BY YEAR AFTER 1975)`, 
          title = `TITLE OF PUBLICATION`,
@@ -95,8 +95,9 @@ dat <- dat_raw |>
          region = if_else(region == 'Southern Hemisphere', 'Global', region),
          region = if_else(region == 'Australia', 'Oceania', region),
          region = if_else(region %in% c('Arctic', 'Antarctic'), 'Polar', region),
-         region = if_else(title %in% c('On the Interpretation of Natural Archives of Atlantic Tropical Cyclone Activity', 
-                                       'On the extraordinary winter flood episode over the North Atlantic Basin in 1936'),
+         region = if_else(title %in% 
+                            c('On the Interpretation of Natural Archives of Atlantic Tropical Cyclone Activity', 
+                              'On the extraordinary winter flood episode over the North Atlantic Basin in 1936'),
                           'Global', region),
          region = if_else(title == 'Climate change facilitated the early colonization of the Azores Archipelago during medieval times', 'Europe', region),
          region = if_else(region == 'N/A', 'Global', region),
@@ -104,7 +105,17 @@ dat <- dat_raw |>
          rec_type = as.character(rec_type)
          # rec_type = rec_type_names[rec_type]
          ) |>
-  filter(pub_type != 'Blog Post')
+  filter(pub_type != 'Blog Post') |>
+  # add labels so tables are easier to read
+  set_variable_labels(discipline = 'Discipline',
+                      region = 'Geographic Region',
+                      method = 'Method', 
+                      period = 'Period',
+                      pub_type = 'Publication Type',
+                      agw = 'Uses AGW',
+                      rec = 'Includes lessons'
+) #|>
+  #set_value_labels(agw = c('Uses AGW' = 'Yes', 'Does not use AGW' = 'No'))
 ```
 
 
@@ -113,67 +124,87 @@ dat <- dat_raw |>
 1. How many publications do we have from each discipline?
 
 ```{r}
-count(dat, discipline) |>
-  knitr::kable()
+dat |>
+  select(discipline) |>
+  tbl_summary() |>
+  modify_header(label = "**Variable**") |>
+  bold_labels()
 ```
 
 2. How many publications are from each region?
 
 ```{r}
 dat |>
-  count(region)
+  select(region) |>
+  tbl_summary() |>
+  modify_header(label = "**Variable**") |>
+  bold_labels()
 ```
 
 3. How many publications are from each period?
 
+Note that N is larger here because each paper can cover multiple time periods.
 ```{r}
 dat |>
-  pull(period) |> 
-  str_split(',') |>
-  list_c() |>
-  as.numeric() |>
-  table() |>
-  enframe(name = 'period', value = 'n') |>
-  mutate(period = factor(periods[as.numeric(period)], levels = periods))
+  select(period) |>
+  mutate(period = map(period, str_split, ',')) |>
+  unnest(period) |>
+  unnest(period) |>
+  mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
+  tbl_summary(label = list(period = 'Period')) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels()
 ```
+
 
 4. How many of our publications use methods that are quantitative, statistical, both, or neither?
 
 ```{r}
 dat |>
-  count(method) |>
-  arrange(-n)
+  select(method) |>
+  tbl_summary() |>
+  modify_header(label = "**Variable**") |>
+  bold_labels()
 ```
 
 5. How many of our publications are original research, a literature review, or a response article?
 
 ```{r}
 dat |>
-  count(type) |>
-  arrange(-n)
+  select(type) |>
+  tbl_summary() |>
+  modify_header(label = "**Variable**") |>
+  bold_labels()
 ```
 
 6. How many of our publications are books, "book/theses" (meaning PhD theses), articles, or "chapter/articles" (meaning book chapters)?
 
 ```{r}
 dat |>
-  count(pub_type)
+  select(pub_type) |>
+  tbl_summary() |>
+  modify_header(label = "**Variable**") |>
+  bold_labels()
 ```
 
 7. How many of our publications use AGW to argue for their importance?
 
 ```{r}
 dat |>
-  count(agw) |>
-  arrange(-n)
+  select(agw) |>
+  tbl_summary() |>
+  modify_header(label = "**Variable**") |>
+  bold_labels()
 ```
 
 8. How many of our publications include lessons for the present/future?
 
 ```{r}
 dat |>
-  count(rec) |>
-  arrange(-n)
+  select(rec) |>
+  tbl_summary() |>
+  modify_header(label = "**Variable**") |>
+  bold_labels()
 ```
 
 9. What types of lessons or recommendations are most common?
@@ -211,9 +242,12 @@ dat |>
 
 ```{r}
 dat |>
-  count(discipline, method) |>
-  pivot_wider(names_from = method, values_from = n, values_fill = 0)
+  select(discipline, method) |>
+  tbl_summary(by = method) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels()
 ```
+
 
 12. How many publications that are *not* in Paleoclimatology/Historical Climatology use Quantitative Analysis? 
 
@@ -228,14 +262,11 @@ dat |>
 
 ```{r}
 dat |>
-  count(region, method) |>
-  group_by(method) |>
-  mutate(percent = n / sum(n, na.rm = TRUE) * 100) |>
-  ungroup() |>
-  select(-n) |>
-  mutate(percent = paste0(round(percent, digits = digits), '%')) |>
-  pivot_wider(names_from = method, values_from = percent, values_fill = '0%') |>
-  select(region, Qualitative, Quantitative, Both, Neither)
+  select(region, method) |>
+  tbl_summary(by = method) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
 
@@ -359,56 +390,85 @@ knitr::knit_exit()
 
 ## Compound Questions
 
-### 1a. What percentage of publications in each discipline use AGW to argue for their importance?
+1a. What percentage of publications in each discipline use AGW to argue for their importance?
 
 ```{r}
 dat |>
-  count(discipline, agw) |>
-  group_by(discipline) |>
-  mutate(percent = paste0(round(n / sum(n) * 100, digits = digits), '%')) |>
-  filter(agw == 'Yes') |>
-  select(discipline, percent)
+  select(discipline, agw) |>
+  tbl_summary(by = agw) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
-### 1b. What percentage of publications in each method use AGW to argue for their importance?
+
+1b. What percentage of publications in each method use AGW to argue for their importance?
 
 ```{r}
 dat |>
-  count(method, agw) |>
-  group_by(method) |>
-  mutate(percent = paste0(round(n / sum(n) * 100, digits = digits), '%')) |>
-  filter(agw == 'Yes') |>
-  select(method, percent)
+  select(method, agw) |>
+  tbl_summary(by = agw) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p()
 ```
 
-### 2a. What percentage of publications in Paleoclimatology/Historical Climatology use modern global warming to argue for their significance? What percentage of publications in all OTHER disciplines do the same? 
+2a. What percentage of publications in Paleoclimatology/Historical Climatology use modern global warming to argue for their significance? What percentage of publications in all *other* disciplines do the same? 
 
 ```{r}
 dat |>
-  mutate(paleo = if_else(discipline == 'Paleoclimatology', TRUE, FALSE)) |>
-  count(paleo, agw) |>
-  group_by(paleo) |>
-  mutate(percent = paste0(round(n / sum(n) * 100, digits = digits), '%')) |>
-  filter(agw == 'Yes') |>
-  select(paleo, percent)
+    mutate(paleo = if_else(discipline == 'Paleoclimatology', discipline, 'All other disciplines')) |>
+  select(paleo, agw) |>
+  tbl_summary(by = paleo) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p()
 ```
-In the discipline of Paleoclimatology/Historical Climatology, approximately 67% of the publications use modern anthropogenic climate change to argue for their significance. For all other disciplines combined, about 45% of the publications do the same.
 
-### 2b. What percentage of publications using quantitative analysis use modern global warming to argue for their significance? And what percentage of publications using the other methods do the same?
+2b. What percentage of publications using quantitative analysis use modern global warming to argue for their significance? And what percentage of publications using the other methods do the same?
+
+Note that here we again combine Quantitative and Both categories.
 ```{r}
 dat |>
-  mutate(quant = if_else(method == 'Quantitative', TRUE, FALSE)) |>
-  count(quant, agw) |>
-  group_by(quant) |>
-  mutate(percent = paste0(round(n / sum(n) * 100, digits = digits), '%')) |>
-  filter(agw == 'Yes') |>
-  select(quant, percent)
+  mutate(quant = if_else(method %in% c('Quantitative', 'Both'), 'Quantitative', 'Other Methods')) |>
+  select(quant, agw) |>
+  tbl_summary(by = quant) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p()
 ```
 
-Among the publications using quantitative analysis, approximately 62% use modern global warming to argue for their significance. In contrast, for publications using other methods, about 47% use modern global warming for the same purpose.
+3a. What percentage of publications from each region use AGW to argue for their importance? 
 
+```{r}
+dat |>
+  select(region, agw) |>
+  tbl_summary(by = region) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p()
 
+dat |>
+  select(region, agw) |>
+  tbl_summary(by = agw) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p()
+```
 
-### 3. What percentage of publications from each region (column E) and period (column F) use AGW to argue for their importance (column O)? 
+3b. What percentage of publications from each period use AGW to argue for their importance? 
+```{r}
+dat |>
+  select(period, agw) |>
+  mutate(period = map(period, str_split, ',')) |>
+  unnest(period) |>
+  unnest(period) |>
+    mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
+  tbl_summary(by = period) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p()
+```
+
 
 This analysis the sums are 100 by AGW
 
@@ -427,13 +487,12 @@ dat |>
   add_count(agw) |>
   filter(agw == 'Yes') |>
   select(period, n) |>
-  mutate(period = map(period, as.character),
-         period = map(period, str_split, ',')) |>
+  mutate(period = map(period, str_split, ',')) |>
   unnest(period) |>
   unnest(period) |>
   mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
   group_by(period) |>
-  summarize(percent = round(n() / first(n) * 100, 2))
+  summarize(percent = round(n() / first(n) * 100, digits))
 ```
 
 This analysis the sums are 100 per region
@@ -499,48 +558,38 @@ dat |>
        fill = "AGW Use")
 ```
 
-### **What percentage of publications that include lessons (column L) comes from each discipline (column D)? What percentage comes from each method (column B)?**
+5. What percentage of publications that include lessons come from each discipline? What percentage comes from each method?
 
 ```{r}
 dat |>
-  filter(rec == 'Yes') |>
-  select(discipline) |>
-  add_tally() |>
-  group_by(discipline) |>
-   summarize(percent = round(n() / first(n) * 100, digits = digits))
+  select(rec, discipline, method) |>
+  tbl_summary(by = rec) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
+
+6a. What percentage of publications in each discipline include lessons for the present/future?
+
 ```{r}
 dat |>
-  filter(rec == 'Yes') |>
-  select(method) |>
-  add_tally() |>
-  group_by(method) |>
-   summarize(percent = round(n() / first(n) * 100, digits = digits))
+  select(rec, discipline) |>
+  tbl_summary(by = discipline) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
-### What percentage of publications in each discipline and each method include lessons for the present/future?
+6b. What percentage of publications in each method include lessons for the present/future?
 
 ```{r}
 dat |>
-  count(discipline, rec) |>
-  group_by(discipline) |>
-  mutate(total = sum(n),
-         percent = round(n / total * 100, 2)) |>
-  filter(rec == 'Yes') |>
-  select(discipline, percent) |>
-  ungroup()
-```
-
-```{r}
-dat |>
-  count(method, rec) |>
-  group_by(method) |>
-  mutate(total = sum(n),
-         percent = round(n / total * 100, 2)) |>
-  filter(rec == 'Yes') |>
-  select(method, percent) |>
-  ungroup()
+  select(rec, method) |>
+  tbl_summary(by = method) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p()
 ```
 
 ```{r}
@@ -573,9 +622,10 @@ dat |>
        fill = "Lessons for Present/Future")
 ```
 
-### What percentage of publications from each region and period include lessons for the present/future?
 
 ```{r}
+#What percentage of publications from each region and period include lessons for the present/future?
+
 dat |>
   ggplot(aes(region)) +
   geom_bar(aes(fill = rec), position = "fill") +
@@ -587,128 +637,129 @@ dat |>
        fill = "Lessons for Present/Future")
 ```
 
-**What percentage of publications that include lessons (column L) focus on each region (column E) and period (column F)?**
+7. What percentage of publications that include lessons focus on each region and period?
 
 ```{r}
 dat |>
-  filter(rec == 'Yes') |>
-  count(region) |>
-  mutate(percent = round(n / sum(n) * 100, digits = digits)) |>
-  select(-n)
+  select(region, rec) |>
+  tbl_summary(by = rec) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
+There might be better ways do this, need to think through how multi-counting papers impacts significance!
 ```{r}
 dat |>
-  filter(rec == 'Yes') |> #196
+  select(period, rec) |>
+  mutate(period = map(period, str_split, ',')) |>
+  unnest(period) |>
+  unnest(period) |>
+    mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
+  tbl_summary(by = rec) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p()
+```
+
+(this is a slightly different version, like above we need to consider how best to handle multiple periods)
+```{r}
+dat |>
+  filter(rec == 'Yes') |> #195
   select(period) |>
-  mutate(period = map(period, as.character),
-         period = map(period, str_split, ',')) |>
+  mutate(period = map(period, str_split, ',')) |>
   unnest(period) |>
   unnest(period) |>
   mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
   count(period) |>
-  mutate(percent = round(n / 196 * 100, digits = digits)) |> # shouldn't hard code this . . .
+  mutate(percent = round(n / 195 * 100, digits = digits)) |> # shouldn't hard code this . . .
   select(-n)
 ```
 
-What percentage of publications from each region and period include lessons for the present/future?
+8a. What percentage of publications from each region include lessons for the present/future?
 
 ```{r}
 dat |>
-  count(region, rec) |>
-  group_by(region) |>
-  mutate(total = sum(n),
-         percent = round(n / total * 100, digits = digits)) |>
-  filter(rec == 'Yes') |>
-  select(region, percent)
+  select(region, rec) |>
+  tbl_summary(by = region) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
+
+8b. What percentage of publications from each period include lessons for the present/future?
 
 ```{r}
 dat |>
-  mutate(period = map(period, as.character),
-         period = map(period, str_split, ',')) |>
+  select(period, rec) |>
+  mutate(period = map(period, str_split, ',')) |>
   unnest(period) |>
   unnest(period) |>
-  mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
-  count(period, rec) |>
-  group_by(period) |>
-  mutate(total = sum(n),
-         percent = round(n / total * 100, digits = digits)) |>
-  filter(rec == 'Yes') |>
-  select(period, percent)
+    mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
+  tbl_summary(by = period) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p()
 ```
 
-### What percentage of publications in each discipline and each method include distinct types of recommendation?
+9a. What percentage of publications in each discipline include distinct types of recommendation?
 
 ```{r}
 dat |>
   select(discipline, rec_type) |>
-  mutate(rec_type = map_chr(rec_type, as.character)) |>
-  count(discipline, rec_type) |>
-  group_by(discipline) |>
-  mutate(total = sum(n),
-         percent = round(n / total * 100, digits = digits)) |>
-  select(-n, -total) |>
-  pivot_wider(names_from = rec_type, values_from = percent, values_fill = 0) |>
-  select(discipline, `1`, `2`, `3`, `6`, `1,2`, `1,2,3`, `2,3`)
+  tbl_summary(by = discipline) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
+
+9b. What percentage of publications in each method include distinct types of recommendation?
 
 ```{r}
 dat |>
   select(method, rec_type) |>
-  mutate(rec_type = map_chr(rec_type, as.character)) |>
-  count(method, rec_type) |>
-  group_by(method) |>
-  mutate(total = sum(n),
-         percent = round(n / total * 100, digits = digits)) |>
-  select(-n, -total) |>
-  pivot_wider(names_from = rec_type, values_from = percent, values_fill = 0) |>
-  select(method, `1`, `2`, `3`, `6`, `1,2`, `1,2,3`, `2,3`)
+  tbl_summary(by = method) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
-### What percentage of publications from each region and period include distinct types of recommendation?
+10a. What percentage of publications from each region include distinct types of recommendation?
+```{r}
+dat |>
+  select(region, rec_type) |>
+  tbl_summary(by = region) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
+```
+
+10b. What percentage of publications from each period include distinct types of recommendation?
 
 ```{r}
 dat |>
   select(period, rec_type) |>
-  mutate(rec_type = map_chr(rec_type, as.character)) |>
-  mutate(period = map(period, as.character),
-         period = map(period, str_split, ',')) |>
+  mutate(period = map(period, str_split, ',')) |>
   unnest(period) |>
   unnest(period) |>
   mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
-  count(period, rec_type) |>
-  group_by(period) |>
-  mutate(total = sum(n),
-         percent = round(n / total * 100, digits = digits)) |>
-  select(-n, -total) |>
-  pivot_wider(names_from = rec_type, values_from = percent, values_fill = 0) |>
-  select(period, `1`, `2`, `3`, `6`, `1,2`, `1,2,3`, `2,3`)
+  tbl_summary(by = period) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
+
+11. What percentage of publications that use AGW to argue for their importance include lessons for the present/future?
 ```{r}
 dat |>
-  select(region, rec_type) |>
-  mutate(rec_type = map_chr(rec_type, as.character)) |>
-  count(region, rec_type) |>
-  group_by(region) |>
-  mutate(total = sum(n),
-         percent = round(n / total * 100, digits = digits)) |>
-  select(-n, -total) |>
-  pivot_wider(names_from = rec_type, values_from = percent, values_fill = 0) |>
-  select(region, `1`, `2`, `3`, `6`, `1,2`, `1,2,3`, `2,3`)
+  select(agw, rec) |>
+  tbl_summary(by = agw) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p()
 ```
 
-### What percentage of publications that use AGW to argue for their importance include lessons for the present/future?
-
-```{r}
-dat |>
-  filter(agw == 'Yes') |>
-  count(rec) |>
-  mutate(percent = round(n / sum(n) * 100, digits = digits)) |>
-  select(-n)
-
-```
 
 ```{r}
 dat |>
@@ -719,19 +770,17 @@ dat |>
        x = "AGW Use",
        y = "Percentage of Publications",
        fill = "Lessons for Present/Future")
-
 ```
 
-Broken down by discipline:
-
+What percentage of palaeosciences/history/literature, etc. articles that use AGW to argue for their importance include lessons for the present/future?
 ```{r}
 dat |>
-  filter(agw == 'Yes') |>
-  count(rec, discipline) |>
-  group_by(discipline) |>
-  mutate(percent = round(n / sum(n) * 100, digits = digits)) |>
-  filter(rec == 'Yes') |>
-  select(discipline, percent)
+    filter(agw == 'Yes') |>
+  select(discipline, rec) |>
+  tbl_summary(by = discipline) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
 ```{r}
@@ -748,16 +797,16 @@ dat |>
 ```
 
 Broken down by region:
-
 ```{r}
 dat |>
   filter(agw == 'Yes') |>
-  count(rec, region) |>
-  group_by(region) |>
-  mutate(percent = round(n / sum(n) * 100, digits = digits)) |>
-  filter(rec == 'Yes') |>
-  select(region, percent)
+  select(region, rec) |>
+  tbl_summary(by = region) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
+
 
 ```{r}
 dat |>
@@ -777,16 +826,15 @@ Broken down by period:
 ```{r}
 dat |>
   filter(agw == 'Yes') |>
-  mutate(period = map(period, as.character),
-         period = map(period, str_split, ',')) |>
+  select(period, rec) |>
+   mutate(period = map(period, str_split, ',')) |>
   unnest(period) |>
   unnest(period) |>
   mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
-  count(rec, period) |>
-  group_by(period) |>
-  mutate(percent = round(n / sum(n) * 100, digits = digits)) |>
-  filter(rec == 'Yes') |>
-  select(period, percent)
+  tbl_summary(by = period) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p()
 ```
 
 ```{r}
@@ -798,11 +846,11 @@ Broken down by method:
 ```{r}
 dat |>
   filter(agw == 'Yes') |>
-  count(rec, method) |>
-  group_by(method) |>
-  mutate(percent = round(n / sum(n) * 100, digits = digits)) |>
-  filter(rec == 'Yes') |>
-  select(method, percent)
+  select(method, rec) |>
+  tbl_summary(by = method) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p()
 ```
 
 ```{r}
@@ -818,15 +866,14 @@ dat |>
 ```
 
 Broken down by publication type:
-
 ```{r}
 dat |>
   filter(agw == 'Yes') |>
-  count(rec, type) |>
-  group_by(type) |>
-  mutate(percent = round(n / sum(n) * 100, digits = digits)) |>
-  filter(rec == 'Yes') |>
-  select(type, percent)
+  select(type, rec) |>
+  tbl_summary(by = type) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
 ```{r}
@@ -846,12 +893,13 @@ Broken down by publication format:
 ```{r}
 dat |>
   filter(agw == 'Yes') |>
-  count(rec, pub_type) |>
-  group_by(pub_type) |>
-  mutate(percent = round(n / sum(n) * 100, digits = digits)) |>
-  filter(rec == 'Yes') |>
-  select(pub_type, percent)
+  select(pub_type, rec) |>
+  tbl_summary(by = pub_type) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p()
 ```
+
 
 ```{r}
 dat |>
@@ -865,7 +913,36 @@ dat |>
        fill = "Lessons for Present/Future")
 ```
 
-### Are there journals which are particularly correlated with including lessons for the present/future?
+12. Are there journals which are particularly correlated with including lessons for the present/future?
+
+Of the journals with 10 or more entries in our database, the following journals have the highest proportion of papers with recommendations for the present or future. However, only Climate and American Literature has a significantly higher proportion of recommendations than the average for all papers, after correcting for multiple comparisons.
+```{r}
+prop <- dat |>
+  select(rec) |>
+  mutate(rec = (rec == 'Yes')) |>
+  pull(rec) |>
+  mean()
+
+dat |>
+  mutate(rec = (rec == 'Yes')) |>
+  group_by(journal) |>
+  summarise(
+    n_papers = n(),
+    n_recs = sum(rec),
+    prop_recs = mean(rec),
+    # Run binomial test for each journal
+    pval = binom.test(n_recs, n_papers, p = prop)$p.value
+  ) |>
+  # Filter to journals with reasonable sample sizes
+  filter(n_papers >= 10) %>%
+  # Add FDR correction
+  mutate(
+    p_adj = p.adjust(pval, method = "fdr"),
+    # Flag significant ones
+    significant = p_adj < 0.05
+  ) %>%
+  arrange(desc(prop_recs))
+```
 
 Check by absolute counts.
 
@@ -873,8 +950,7 @@ Check by absolute counts.
 dat |>
   filter(rec == 'Yes') |>
   count(journal) |>
-  arrange(-n) |>
-  knitr::kable()
+  arrange(-n)
 ```
 
 Now by percentages.
@@ -888,13 +964,10 @@ dat |>
   filter(rec == 'Yes') |>
   mutate(pct = round((n / n_tot) * 100, digits = digits)) |>
   select(journal, pct, n_tot) |>
-  arrange(-pct, -n_tot) |>
-  knitr::kable()
+  arrange(-pct, -n_tot)
 ```
 
-There's most certainly a better way to do this!
-
-# Compund figures
+## Compund figures
 ```{r}
 dat |>
   ggplot(aes(discipline)) +
@@ -923,4 +996,15 @@ dat |>
        x = "Method",
        y = "Percentage of Publications",
        fill = "AGW Use")
+```
+
+
+## Regression
+
+```{r}
+# should adjust baseline and try to incorporate more vars
+dat2 <- mutate(dat, rec_bin = rec == 'Yes')
+m1 <- glm(rec_bin ~ method + region + agw,
+          family = binomial, data = dat2)
+tbl_regression(m1)
 ```
