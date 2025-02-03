@@ -107,10 +107,14 @@ dat <- dat_raw |>
                           'Global', region),
          region = if_else(title == 'Climate change facilitated the early colonization of the Azores Archipelago during medieval times', 'Europe', region),
          region = if_else(region == 'N/A', 'Global', region),
-         period = as.character(period),
          rec_type = as.character(rec_type)
          # rec_type = rec_type_names[rec_type]
          ) |>
+  mutate(period = as.character(period),
+         period = map(period, ~str_split_1(.x, ',') |>
+                            as.numeric() %>%
+                        periods[.] |>
+                        factor(levels = periods))) |>
   filter(pub_type != 'Blog Post') |>
   # add labels so tables are easier to read
   set_variable_labels(discipline = 'Discipline',
@@ -153,14 +157,10 @@ Note that N is larger here because each paper can cover multiple time periods.
 ```{r tbl3}
 dat |>
   select(period) |>
-  mutate(period = map(period, str_split, ',')) |>
   unnest(period) |>
-  unnest(period) |>
-  mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
   tbl_summary(label = list(period = 'Period')) |>
   modify_header(label = "**Variable**") |>
-  bold_labels() |>
-  as_gt()
+  bold_labels()
 ```
 
 ### 4.  How many of our publications use methods that are quantitative, statistical, both, or neither?
@@ -297,14 +297,9 @@ b <- dat |>
        y = "Publications")
 
 c <- dat |>
-  pull(period) |> 
-  str_split(',') |>
-  list_c() |>
-  as.numeric() |>
-  table() |>
-  enframe(name = 'period', value = 'n') |>
-  mutate(period = factor(periods[as.numeric(period)], levels = periods),
-         n = as.numeric(n)) |>  
+  select(period) |>
+  unnest(period) |>
+  count(period) |>
   ggplot(aes(period, n)) +
   geom_col() +
   coord_flip() +
@@ -438,7 +433,7 @@ dat |>
   add_p()
 ```
 
-3a. What percentage of publications from each region use AGW to argue for their importance?
+### 3a. What percentage of publications from each region use AGW to argue for their importance?
 
 ```{r}
 dat |>
@@ -454,24 +449,19 @@ dat |>
   tbl_summary(by = agw) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p() |>
-  as_gt()
+  add_p()
 ```
 
-3b. What percentage of publications from each period use AGW to argue for their importance?
+### 3b. What percentage of publications from each period use AGW to argue for their importance?
 
 ```{r}
 dat |>
   select(period, agw) |>
-  mutate(period = map(period, str_split, ',')) |>
   unnest(period) |>
-  unnest(period) |>
-    mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
   tbl_summary(by = period) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p() |>
-  as_gt()
+  add_p()
 ```
 
 This analysis the sums are 100 by AGW
@@ -491,10 +481,7 @@ dat |>
   add_count(agw) |>
   filter(agw == 'Yes') |>
   select(period, n) |>
-  mutate(period = map(period, str_split, ',')) |>
   unnest(period) |>
-  unnest(period) |>
-  mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
   group_by(period) |>
   summarize(percent = round(n() / first(n) * 100, digits))
 ```
@@ -512,29 +499,14 @@ dat |>
   ungroup()
 ```
 
-```{r}
-# arrange by percent yes?
-dat |>
-  ggplot(aes(region)) +
-  geom_bar(aes(fill = agw), position = "fill") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Percentage of Publications Using AGW to Argue for Importance by Region",
-       x = "Region",
-       y = "Percentage of Publications",
-       fill = "AGW Use")
-```
+
 
 Same but for periods
 
 ```{r}
 dat |>
   select(period, agw) |>
-  mutate(period = map(period, as.character),
-         period = map(period, str_split, ',')) |>
   unnest(period) |>
-  unnest(period) |>
-  mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
   count(period, agw)  |>
   group_by(period) |>
 mutate(total = sum(n),
@@ -544,25 +516,8 @@ mutate(total = sum(n),
   ungroup()
 ```
 
-```{r}
-dat |>
-  select(period, agw) |>
-  mutate(period = map(period, as.character),
-         period = map(period, str_split, ',')) |>
-  unnest(period) |>
-  unnest(period) |>
-  mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
-  ggplot(aes(period)) +
-  geom_bar(aes(fill = agw), position = "fill") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Percentage of Publications Using AGW to Argue for Importance by Period",
-       x = "Period",
-       y = "Percentage of Publications",
-       fill = "AGW Use")
-```
 
-5.  What percentage of publications that include lessons come from each discipline? What percentage comes from each method?
+### 5.  What percentage of publications that include lessons come from each discipline? What percentage comes from each method?
 
 ```{r}
 dat |>
@@ -570,11 +525,10 @@ dat |>
   tbl_summary(by = rec) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
-  as_gt()
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
-6a. What percentage of publications in each discipline include lessons for the present/future?
+### 6a. What percentage of publications in each discipline include lessons for the present/future?
 
 ```{r}
 dat |>
@@ -582,11 +536,10 @@ dat |>
   tbl_summary(by = discipline) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
-  as_gt()
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
-6b. What percentage of publications in each method include lessons for the present/future?
+### 6b. What percentage of publications in each method include lessons for the present/future?
 
 ```{r}
 dat |>
@@ -594,55 +547,11 @@ dat |>
   tbl_summary(by = method) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p() |>
-  as_gt()
+  add_p()
 ```
 
-```{r}
-dat |>
-  ggplot(aes(discipline)) +
-  geom_bar(aes(fill = rec), position = "fill") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Percentage of Publications Including Lessons for the Present/Future by Discipline",
-       x = "Discipline",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
 
-dat |>
-  ggplot(aes(method)) +
-  geom_bar(aes(fill = rec), position = "fill") +
-  theme_minimal() +
-  labs(title = "Percentage of Publications Including Lessons for the Present/Future by Method",
-       x = "Method",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
-
-dat |>
-  ggplot(aes(type)) +
-  geom_bar(aes(fill = rec), position = "fill") +
-  theme_minimal() +
-  labs(title = "Percentage of Publications Including Lessons for the Present/Future by Method",
-       x = "Method",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
-```
-
-```{r}
-#What percentage of publications from each region and period include lessons for the present/future?
-
-dat |>
-  ggplot(aes(region)) +
-  geom_bar(aes(fill = rec), position = "fill") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Percentage of Publications Including Lessons for the Present/Future by Region",
-       x = "Region",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
-```
-
-7.  What percentage of publications that include lessons focus on each region and period?
+### 7.  What percentage of publications that include lessons focus on each region and period?
 
 ```{r}
 dat |>
@@ -650,8 +559,7 @@ dat |>
   tbl_summary(by = rec) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
-  as_gt()
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
 There might be better ways do this, need to think through how multi-counting papers impacts significance!
@@ -659,15 +567,11 @@ There might be better ways do this, need to think through how multi-counting pap
 ```{r}
 dat |>
   select(period, rec) |>
-  mutate(period = map(period, str_split, ',')) |>
   unnest(period) |>
-  unnest(period) |>
-    mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
   tbl_summary(by = rec) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p() |>
-  as_gt()
+  add_p()
 ```
 
 (this is a slightly different version, like above we need to consider how best to handle multiple periods)
@@ -676,16 +580,13 @@ dat |>
 dat |>
   filter(rec == 'Yes') |> #195
   select(period) |>
-  mutate(period = map(period, str_split, ',')) |>
   unnest(period) |>
-  unnest(period) |>
-  mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
   count(period) |>
   mutate(percent = round(n / 195 * 100, digits = digits)) |> # shouldn't hard code this . . .
   select(-n)
 ```
 
-8a. What percentage of publications from each region include lessons for the present/future?
+### 8a. What percentage of publications from each region include lessons for the present/future?
 
 ```{r}
 dat |>
@@ -693,19 +594,15 @@ dat |>
   tbl_summary(by = region) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
-  as_gt()
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
-8b. What percentage of publications from each period include lessons for the present/future?
+### 8b. What percentage of publications from each period include lessons for the present/future?
 
 ```{r}
 dat |>
   select(period, rec) |>
-  mutate(period = map(period, str_split, ',')) |>
   unnest(period) |>
-  unnest(period) |>
-    mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
   tbl_summary(by = period) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
@@ -713,7 +610,7 @@ dat |>
   as_gt()
 ```
 
-9a. What percentage of publications in each discipline include distinct types of recommendation?
+### 9a. What percentage of publications in each discipline include distinct types of recommendation?
 
 ```{r}
 dat |>
@@ -725,7 +622,7 @@ dat |>
   as_gt()
 ```
 
-9b. What percentage of publications in each method include distinct types of recommendation?
+### 9b. What percentage of publications in each method include distinct types of recommendation?
 
 ```{r}
 dat |>
@@ -737,7 +634,7 @@ dat |>
   as_gt()
 ```
 
-10a. What percentage of publications from each region include distinct types of recommendation?
+### 10a. What percentage of publications from each region include distinct types of recommendation?
 
 ```{r}
 dat |>
@@ -749,15 +646,12 @@ dat |>
   as_gt()
 ```
 
-10b. What percentage of publications from each period include distinct types of recommendation?
+### 10b. What percentage of publications from each period include distinct types of recommendation?
 
 ```{r}
 dat |>
   select(period, rec_type) |>
-  mutate(period = map(period, str_split, ',')) |>
   unnest(period) |>
-  unnest(period) |>
-  mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
   tbl_summary(by = period) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
@@ -765,7 +659,7 @@ dat |>
   as_gt()
 ```
 
-11. What percentage of publications that use AGW to argue for their importance include lessons for the present/future?
+### 11. What percentage of publications that use AGW to argue for their importance include lessons for the present/future?
 
 ```{r}
 dat |>
@@ -792,7 +686,7 @@ What percentage of palaeosciences/history/literature, etc. articles that use AGW
 
 ```{r}
 dat |>
-    filter(agw == 'Yes') |>
+  filter(agw == 'Yes') |>
   select(discipline, rec) |>
   tbl_summary(by = discipline) |>
   modify_header(label = "**Variable**") |>
@@ -827,18 +721,6 @@ dat |>
   as_gt()
 ```
 
-```{r}
-dat |>
-  filter(agw == 'Yes') |>
-  ggplot(aes(region)) +
-  geom_bar(aes(fill = rec), position = "fill") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Percentage of Publications that Use AGW for Justification Including Lessons for the Present/Future by Region",
-       x = "Region",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
-```
 
 Broken down by period:
 
@@ -846,10 +728,7 @@ Broken down by period:
 dat |>
   filter(agw == 'Yes') |>
   select(period, rec) |>
-   mutate(period = map(period, str_split, ',')) |>
   unnest(period) |>
-  unnest(period) |>
-  mutate(period = factor(periods[as.numeric(period)], levels = periods)) |>
   tbl_summary(by = period) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
@@ -870,20 +749,7 @@ dat |>
   tbl_summary(by = method) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p() |>
-  as_gt()
-```
-
-```{r}
-dat |>
-  filter(agw == 'Yes') |>
-  ggplot(aes(method)) +
-  geom_bar(aes(fill = rec), position = "fill") +
-  theme_minimal() +
-  labs(title = "Percentage of Publications that Use AGW for Justification Including Lessons for the Present/Future by Method",
-       x = "Method",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
+  add_p()
 ```
 
 Broken down by publication type:
@@ -895,20 +761,7 @@ dat |>
   tbl_summary(by = type) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE)) |>
-  as_gt()
-```
-
-```{r}
-dat |>
-  filter(agw == 'Yes') |>
-  ggplot(aes(type)) +
-  geom_bar(aes(fill = rec), position = "fill") +
-  theme_minimal() +
-  labs(title = "Percentage of Publications that Use AGW for Justification Including Lessons for the Present/Future by Publication Type",
-       x = "Publication Type",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
 Broken down by publication format:
@@ -920,23 +773,11 @@ dat |>
   tbl_summary(by = pub_type) |>
   modify_header(label = "**Variable**") |>
   bold_labels() |>
-  add_p() |>
-  as_gt()
+  add_p()
 ```
 
-```{r}
-dat |>
-  filter(agw == 'Yes') |>
-  ggplot(aes(pub_type)) +
-  geom_bar(aes(fill = rec), position = "fill") +
-  theme_minimal() +
-  labs(title = "Percentage of Publications that Use AGW for Justification Including Lessons for the Present/Future by Journal",
-       x = "Journal",
-       y = "Percentage of Publications",
-       fill = "Lessons for Present/Future")
-```
 
-12. Are there journals which are particularly correlated with including lessons for the present/future?
+### 12. Are there journals which are particularly correlated with including lessons for the present/future?
 
 Of the journals with 10 or more entries in our database, the following journals have the highest proportion of papers with recommendations for the present or future. However, only Climate and American Literature has a significantly higher proportion of recommendations than the average for all papers, after correcting for multiple comparisons.
 
@@ -1023,6 +864,111 @@ dat |>
        fill = "AGW Use")
 ```
 
+```{r}
+dat |>
+  filter(agw == 'Yes') |>
+  ggplot(aes(method)) +
+  geom_bar(aes(fill = rec), position = "fill") +
+  theme_minimal() +
+  labs(title = "Percentage of Publications that Use AGW for Justification Including Lessons for the Present/Future by Method",
+       x = "Method",
+       y = "Percentage of Publications",
+       fill = "Lessons for Present/Future")
+```
+
+```{r}
+#What percentage of publications from each region and period include lessons for the present/future?
+
+dat |>
+  ggplot(aes(region)) +
+  geom_bar(aes(fill = rec), position = "fill") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Percentage of Publications Including Lessons for the Present/Future by Region",
+       x = "Region",
+       y = "Percentage of Publications",
+       fill = "Lessons for Present/Future")
+```
+
+```{r}
+dat |>
+  filter(agw == 'Yes') |>
+  ggplot(aes(pub_type)) +
+  geom_bar(aes(fill = rec), position = "fill") +
+  theme_minimal() +
+  labs(title = "Percentage of Publications that Use AGW for Justification Including Lessons for the Present/Future by Journal",
+       x = "Journal",
+       y = "Percentage of Publications",
+       fill = "Lessons for Present/Future")
+```
+
+```{r}
+dat |>
+  ggplot(aes(discipline)) +
+  geom_bar(aes(fill = rec), position = "fill") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Percentage of Publications Including Lessons for the Present/Future by Discipline",
+       x = "Discipline",
+       y = "Percentage of Publications",
+       fill = "Lessons for Present/Future")
+
+dat |>
+  ggplot(aes(method)) +
+  geom_bar(aes(fill = rec), position = "fill") +
+  theme_minimal() +
+  labs(title = "Percentage of Publications Including Lessons for the Present/Future by Method",
+       x = "Method",
+       y = "Percentage of Publications",
+       fill = "Lessons for Present/Future")
+
+dat |>
+  ggplot(aes(type)) +
+  geom_bar(aes(fill = rec), position = "fill") +
+  theme_minimal() +
+  labs(title = "Percentage of Publications Including Lessons for the Present/Future by Method",
+       x = "Method",
+       y = "Percentage of Publications",
+       fill = "Lessons for Present/Future")
+```
+
+```{r}
+dat |>
+  filter(agw == 'Yes') |>
+  ggplot(aes(type)) +
+  geom_bar(aes(fill = rec), position = "fill") +
+  theme_minimal() +
+  labs(title = "Percentage of Publications that Use AGW for Justification Including Lessons for the Present/Future by Publication Type",
+       x = "Publication Type",
+       y = "Percentage of Publications",
+       fill = "Lessons for Present/Future")
+```
+
+```{r}
+dat |>
+  select(period, agw) |>
+  unnest(period) |>
+  ggplot(aes(period)) +
+  geom_bar(aes(fill = agw), position = "fill") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Percentage of Publications Using AGW to Argue for Importance by Period",
+       x = "Period",
+       y = "Percentage of Publications",
+       fill = "AGW Use")
+```
+```{r}
+dat |>
+  filter(agw == 'Yes') |>
+  ggplot(aes(region)) +
+  geom_bar(aes(fill = rec), position = "fill") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Percentage of Publications that Use AGW for Justification Including Lessons for the Present/Future by Region",
+       x = "Region",
+       y = "Percentage of Publications",
+       fill = "Lessons for Present/Future")
+```
 ## Regression
 
 ```{r}
