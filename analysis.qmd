@@ -75,7 +75,13 @@ periods <- c('Pleistocene',
              'Present')
 ```
 
-Note: This analysis pulls data directly from the Google Sheet [here](https://docs.google.com/spreadsheets/d/1Oz1VSN4xjyeRdV7C8fGSPQ_ni6FevMxL0EAji3x9Gp0/edit?gid=1797047085#gid=1797047085), so the plots should update automatically as the spreadsheet changes.
+{{< pagebreak >}}
+
+## Intro
+
+This is a fully reproducible analysis written in R and Quarto. The source code for this analysis, including all the R code to run the data analysis and produce the tables and figures you see below, is available [here](https://github.com/nick-gauthier/hcs-meta).
+
+This analysis pulls data directly from the Google Sheet [here](https://docs.google.com/spreadsheets/d/1Oz1VSN4xjyeRdV7C8fGSPQ_ni6FevMxL0EAji3x9Gp0/edit?gid=1797047085#gid=1797047085), so the tables and plots should update automatically as the spreadsheet changes.
 
 ```{r preprocessing}
 # should update so we save the named list of periods in "periods" right away
@@ -155,6 +161,9 @@ dat |>
   bold_labels()
 ```
 
+{{< pagebreak >}}
+
+
 ### 3.  How many publications are from each period?
 
 Note that N is larger here because each paper can cover multiple time periods.
@@ -188,7 +197,9 @@ dat |>
   bold_labels()
 ```
 
-### 6.  How many of our publications are books, "book/theses" (meaning PhD theses), articles, or "chapter/articles" (meaning book chapters)?
+{{< pagebreak >}}
+
+### 6.  How many publications are books, "book/theses" (PhD theses), articles, or "chapter/articles" (book chapters)?
 
 ```{r tbl6}
 dat |>
@@ -230,6 +241,8 @@ dat |>
   modify_header(label = "**Variable**") |>
   bold_labels()
 ```
+
+{{< pagebreak >}}
 
 ### 10. Among lessons (so leaving out "none of the above") what types of lessons or recommendations are most common?
 
@@ -275,6 +288,8 @@ dat |>
   modify_header(label = "**Variable**") |>
   add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
+
+{{< pagebreak >}}
 
 ### Figures for simple questions
 
@@ -334,6 +349,7 @@ dat |>
   scale_fill_brewer(palette = 'Spectral')
 ```
 
+{{< pagebreak >}}
 
 #### Figure 2: a chart/graph showing answers to questions 4-6.
 
@@ -365,6 +381,7 @@ f <- dat |>
 
 d + e + f
 ```
+
 
 #### Figure 3: a chart/graph showing answers to questions 7-9.
 
@@ -401,6 +418,7 @@ i <- dat |>
 
 g + h + i
 ```
+{{< pagebreak >}}
 
 ## Compound Questions
 
@@ -414,6 +432,8 @@ dat |>
   bold_labels() |>
   add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
+
+{{< pagebreak >}}
 
 ### 2a. What percentage of publications in Paleoclimatology/Historical Climatology use modern global warming to argue for their significance? What percentage of publications in all *other* disciplines do the same?
 
@@ -449,6 +469,8 @@ dat |>
   add_p()
 ```
 
+{{< pagebreak >}}
+
 ### 3b. What percentage of publications from each period use AGW to argue for their importance?
 
 Again, doing it both ways so we have them for reference.
@@ -472,6 +494,7 @@ dat |>
   add_p()
 ```
 
+{{< pagebreak >}}
 
 ### 5.  What percentage of publications that include lessons come from each discipline? What percentage comes from each method?
 
@@ -559,6 +582,7 @@ dat |>
   modify_header(label = "**Variable**") |>
   add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
+{{< pagebreak >}}
 
 ### 9b. What percentage of publications in each method include distinct types of recommendation?
 
@@ -709,6 +733,7 @@ dat |>
   arrange(desc(prop_recs))
 ```
 
+{{< pagebreak >}}
 
 ## Figures for compound questions
 
@@ -760,6 +785,9 @@ b <- dat |>
 
 a + b + plot_layout(guides = 'collect')
 ```
+
+{{< pagebreak >}}
+
 
 ### Figure 2: a chart/graph showing answers to questions 3-4. 
 
@@ -819,6 +847,8 @@ d <- dat |>
 
 c + d + plot_layout(guides = 'collect')
 ```
+
+{{< pagebreak >}}
 
 ### Figure 3: a chart/graph showing answers to questions 5-6. 
 
@@ -942,8 +972,10 @@ f <- dat |>
 
 e + f + plot_layout(guides = 'collect')
 ```
+{{< pagebreak >}}
 
 ### Figure 4: a chart/graph showing answers to question 7.
+
 ```{r fig.width = 10.5, fig.asp = .3}
 e <- dat |>
   ggplot(aes(region)) +
@@ -999,7 +1031,6 @@ f <- dat |>
 
 e + f + plot_layout(guides = 'collect')
 ```
-
 
 ### Figure 5: a chart/ graph showing answers to question 8.
 
@@ -1030,6 +1061,8 @@ f <- dat |>
 
 e + f + plot_layout(guides = 'collect')
 ```
+{{< pagebreak >}}
+
 
 ## Regression
 
@@ -1037,11 +1070,11 @@ Testing different way to look at the data through logistic regression. How well 
 
 This is just a test, but we can explore or expand this in various ways if useful.
 
+
 ```{r}
 # should adjust baseline and try to incorporate more vars
 dat2 <- mutate(dat, rec_bin = rec == 'Yes')
 m1 <- glm(rec_bin ~ method + region + agw + discipline,
           family = binomial, data = dat2)
-tbl_regression(m1) |>
-  as_gt()
+tbl_regression(m1)
 ```
