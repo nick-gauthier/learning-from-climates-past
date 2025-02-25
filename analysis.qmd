@@ -735,6 +735,32 @@ dat |>
 
 {{< pagebreak >}}
 
+### 13. What percentage of each publication type provides lessons versus AGW justifications?
+
+```{r}
+## First, looking at publication types separately
+dat |>
+  select(pub_type, rec, agw) |>
+  tbl_summary(by = pub_type) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
+
+## Now, comparing with chapter/article grouped with article
+dat |>
+  mutate(pub_type_grouped = case_when(
+    pub_type %in% c("Article", "Chapter/Article") ~ "Article (combined)",
+    TRUE ~ pub_type
+  )) |>
+  select(pub_type_grouped, rec, agw) |>
+  tbl_summary(by = pub_type_grouped) |>
+  modify_header(label = "**Variable**") |>
+  bold_labels() |>
+  add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
+```
+
+{{< pagebreak >}}
+
 ## Figures for compound questions
 
 ### Figure 1: a chart/graph showing answers to questions 1-2. 
