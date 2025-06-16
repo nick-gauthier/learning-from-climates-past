@@ -14,11 +14,7 @@ This repository contains R code necessary to reproduce the main analysis present
 - RStudio: https://posit.co/products/open-source/rstudio/
 
 ## R Package Dependencies
-We used R version 4.4.2 (R Core Team 2024) and the following R packages: gtsummary v. 2.1.0 (Sjoberg et al. 2021), labelled v. 2.14.0 (Larmarange 2025), tidyverse v. 2.0.0 (Wickham et al. 2019). RStudio will prompt to you install these required packages automatically if they are not available when you render the document:
-- tidyverse (data manipulation)
-- readxl (Excel file reading)
-- gtsummary (summary tables)  
-- labelled (variable labels)
+We used R version 4.4.2 (R Core Team 2024) and the following R packages: gtsummary v. 2.1.0 (Sjoberg et al. 2021), labelled v. 2.14.0 (Larmarange 2025), tidyverse v. 2.0.0 (Wickham et al. 2019). RStudio will prompt to you install these required packages automatically if they are not available when you render the document.
 
 ### Running the Analysis
 1. Download and extract the repository
