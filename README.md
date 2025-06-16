@@ -1,6 +1,6 @@
 ## Data Analysis for "Learning More Effectively from Climate’s Past"
 
-[![DOI](https://zenodo.org/badge/nick-gauthier/.svg)](https://zenodo.org/badge/latestdoi/)
+[![DOI](https://zenodo.org/badge/926226329.svg)](https://zenodo.org/badge/latestdoi/926226329)
 
 This repository contains R code necessary to reproduce the main analysis presented in *Degroot et al. ND, "Learning More Effectively from Climate’s Past"*:
 1. A Quarto notebook with the R source code is available here: [analysis.qmd](analysis.qmd)
