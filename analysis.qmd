@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```{r setup}
 # Load required packages
 library(tidyverse) # for data manipulation
-library(googlesheets4) # for pulling data from Google Sheets
+library(readxl) # for pulling data from excel spreadsheet
 library(patchwork) # for combining plots
 library(gtsummary) # for summary tables
 library(labelled) # for informative variable names
@@ -29,9 +29,6 @@ theme_gtsummary_compact(font_size = 11) # set default theme for tables
 
 # how many digits to percentages to
 digits <- 0
-
-# read the Google Sheet, done here so we only do it once per session
-dat_raw <- read_sheet("https://docs.google.com/spreadsheets/d/1Oz1VSN4xjyeRdV7C8fGSPQ_ni6FevMxL0EAji3x9Gp0/edit?gid=1797047085#gid=1797047085") 
 
 # category names for use elsewhere
 discipline_names <- c('Archaeology', 
@@ -91,8 +88,8 @@ This is a fully reproducible analysis written in R and Quarto. The source code f
 This analysis pulls data directly from the Google Sheet [here](https://docs.google.com/spreadsheets/d/1Oz1VSN4xjyeRdV7C8fGSPQ_ni6FevMxL0EAji3x9Gp0/edit?gid=1797047085#gid=1797047085), so the tables and plots should update automatically as the spreadsheet changes.
 
 ```{r preprocessing}
-# should update so we save the named list of periods in "periods" right away
-dat <- dat_raw |>
+dat <- read_excel('Learning More Effectively Database.xlsx') |>
+  # rename columns to be more readable
   rename(date = `DATE (BY YEAR AFTER 1975)`, 
          title = `TITLE OF PUBLICATION`,
          method = `TYPE OF ARTICLE 1`,
