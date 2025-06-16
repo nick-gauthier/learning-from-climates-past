@@ -4,8 +4,6 @@ subtitle: "Reproducible Data Analysis"
 author: Nicolas Gauthier
 date: last-modified
 date-format: "[Last updated:] MMMM D, YYYY"
-execute:
-  keep-md: true
 format: 
   typst:
     toc: true
