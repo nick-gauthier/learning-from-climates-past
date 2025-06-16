@@ -1,7 +1,11 @@
 ---
-title: "Lessons of the Past data analysis"
-author: Nick Gauthier
-date: "Last updated: `r Sys.Date()`"
+title: "Learning More Effectively from Climate’s Past"
+subtitle: "Reproducible Data Analysis"
+author: Nicolas Gauthier
+date: last-modified
+date-format: "[Last updated:] MMMM D, YYYY"
+execute:
+  keep-md: true
 format: 
   typst:
     toc: true
@@ -27,35 +31,35 @@ library(labelled) # for informative variable names
 theme_set(theme_bw()) # set default plot theme to black and white
 theme_gtsummary_compact(font_size = 11) # set default theme for tables
 
-# how many digits to percentages to
+# how many digits to round percentages to
 digits <- 0
 
 # category names for use elsewhere
 discipline_names <- c('Archaeology', 
-                        'Economics', 
-                        'Literature', 
-                        'Geography', 
-                        'History', 
-                        'Paleoclimatology', 
-                        'Epidemiology', 
-                        'Other', 
-                        'Joint Fields')
+                      'Economics', 
+                      'Literature', 
+                      'Geography', 
+                      'History', 
+                      'Paleoclimatology', 
+                      'Epidemiology', 
+                      'Other', 
+                      'Joint Fields')
 
 method_names <- c('Qualitative', 
-                    'Quantitative', 
-                    'Both', 
-                    'Neither')
+                  'Quantitative', 
+                  'Both', 
+                  'Neither')
 
 type_names <- c('Original Research', 
-                    'Lit. Review/Method Intervention', 
-                    'Response Article')
+                'Lit. Review/Method Intervention', 
+                'Response Article')
 
 rec_type_names <- c(c('Broad, abstract, or vague', 
-                       'Specific but not actionable', 
-                       'Specific and actionable for policymakers', 
-                       'Any two of the above', 
-                       'All three of the above', 
-                       'None of the above'))
+                      'Specific but not actionable', 
+                      'Specific and actionable for policymakers', 
+                      'Any two of the above', 
+                      'All three of the above', 
+                      'None of the above'))
 
 rec_types <- c('Broad, abstract, or vague',
                'Specific but not actionable',
@@ -79,13 +83,12 @@ periods <- c('Pleistocene',
              'Present')
 ```
 
-{{< pagebreak >}}
 
-## Intro
+## Introduction
 
-This is a fully reproducible analysis written in R and Quarto. The source code for this analysis, including all the R code to run the data analysis and produce the tables and figures you see below, is available [here](https://github.com/nick-gauthier/hcs-meta).
+This is a fully reproducible analysis written in R and Quarto. The source code for this document, including all the R code to run the preprocess the data, run the analysis, and produce the tables you see below, is available [here on GitHub](https://github.com/nick-gauthier/hcs-meta/analysis.qmd).
 
-This analysis pulls data directly from the Google Sheet [here](https://docs.google.com/spreadsheets/d/1Oz1VSN4xjyeRdV7C8fGSPQ_ni6FevMxL0EAji3x9Gp0/edit?gid=1797047085#gid=1797047085), so the tables and plots should update automatically as the spreadsheet changes.
+This analysis pulls data directly from the original Excel Spreadsheet [at this link](https://github.com/nick-gauthier/hcs-meta/Learning More Effectively Database.xlsx), so the tables will update automatically when the analysis is rerun if the spreadsheet changes.
 
 ```{r preprocessing}
 dat <- read_excel('Learning More Effectively Database.xlsx') |>
@@ -106,7 +109,8 @@ dat <- read_excel('Learning More Effectively Database.xlsx') |>
          lesson_text = `LESSONS OR RECOMMENDATIONS FOR THE PRESENT OR FUTURE (ONE SENTENCE)`) |>
   mutate(discipline = discipline_names[discipline],
          method = method_names[method],
-         type = type_names[type],
+         type = type_names[type], 
+         # consolidate region names
          region = if_else(region %in% american_regions, 'Americas', region),
          region = if_else(region == 'Southern Hemisphere', 'Global', region),
          region = if_else(region == 'Australia', 'Oceania', region),
@@ -118,17 +122,17 @@ dat <- read_excel('Learning More Effectively Database.xlsx') |>
          region = if_else(title == 'Climate change facilitated the early colonization of the Azores Archipelago during medieval times', 'Europe', region),
          region = if_else(region == 'N/A', 'Global', region),
          rec_type = as.character(rec_type)
-         ) |>
+  ) |>
   mutate(period = as.character(period),
          period = map(period, ~str_split_1(.x, ',') |>
-                            as.numeric() %>%
+                        as.numeric() %>%
                         periods[.] |>
                         factor(levels = periods))) |>
-     mutate(rec_type = as.character(rec_type),
+  mutate(rec_type = as.character(rec_type),
          rec_type = map(rec_type, ~str_split_1(.x, ',') |>
-                            as.numeric() %>%
-                        rec_types[.] |>
-                        factor(levels = rec_types))) |>
+                          as.numeric() %>%
+                          rec_types[.] |>
+                          factor(levels = rec_types))) |>
   filter(pub_type != 'Blog Post') |>
   # add labels so tables are easier to read
   set_variable_labels(discipline = 'Discipline',
@@ -139,9 +143,10 @@ dat <- read_excel('Learning More Effectively Database.xlsx') |>
                       agw = 'Uses AGW',
                       rec = 'Includes lessons',
                       rec_type = 'Recommendation Type'
-) #|>
-  #set_value_labels(agw = c('Uses AGW' = 'Yes', 'Does not use AGW' = 'No'))
+  )
 ```
+
+{{< pagebreak >}}
 
 ## Simple Questions
 
@@ -154,7 +159,6 @@ dat |>
   modify_header(label = "**Variable**") |>
   bold_labels()
 ```
-
 ### 2. How many publications are from each region?
 
 ```{r tbl2}
@@ -280,6 +284,8 @@ out <- dat |>
 
 `r out` publications from disciplines other than paleoclimatology use quantitative analysis.
 
+{{< pagebreak >}}
+
 ### 13. What percentage of publications in every method consider each region?
 
 ```{r tbl13}
@@ -289,9 +295,6 @@ dat |>
   modify_header(label = "**Variable**") |>
   add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
-
-{{< pagebreak >}}
-
 
 ## Compound Questions
 
@@ -474,6 +477,8 @@ dat |>
   add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
+{{< pagebreak >}}
+
 ### 10b. What percentage of publications from each period include distinct types of recommendation?
 
 Note, because each paper can have multiple periods *and* recommendation types, there are different ways to do this. Here we just look at all combinations, which is not necessarily the best way to do this!
@@ -498,7 +503,7 @@ dat |>
   add_p() 
 ```
 
-What percentage of palaeosciences/history/literature, etc. articles that use AGW to argue for their importance include lessons for the present/future?
+What percentage of paleosciences/history/literature, etc. articles that use AGW to argue for their importance include lessons for the present/future?
 
 ```{r}
 dat |>
@@ -508,6 +513,8 @@ dat |>
   modify_header(label = "**Variable**") |>
   add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
+
+{{< pagebreak >}}
 
 Same as above, but now broken down by region:
 
@@ -597,8 +604,6 @@ dat |>
   ) %>%
   arrange(desc(prop_recs))
 ```
-
-{{< pagebreak >}}
 
 ### 13. What percentage of each publication type provides lessons versus AGW justifications?
 
