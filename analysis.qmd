@@ -25,7 +25,7 @@ library(gtsummary) # for summary tables
 library(labelled) # for informative variable names
 
 theme_set(theme_bw()) # set default plot theme to black and white
-theme_gtsummary_compact() # set default theme for tables
+theme_gtsummary_compact(font_size = 11) # set default theme for tables
 
 # how many digits to percentages to
 digits <- 0
