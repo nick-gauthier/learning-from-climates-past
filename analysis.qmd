@@ -43,19 +43,23 @@ discipline_names <- c('Archaeology',
                         'Epidemiology', 
                         'Other', 
                         'Joint Fields')
+
 method_names <- c('Qualitative', 
                     'Quantitative', 
                     'Both', 
                     'Neither')
+
 type_names <- c('Original Research', 
                     'Lit. Review/Method Intervention', 
                     'Response Article')
+
 rec_type_names <- c(c('Broad, abstract, or vague', 
                        'Specific but not actionable', 
                        'Specific and actionable for policymakers', 
                        'Any two of the above', 
                        'All three of the above', 
                        'None of the above'))
+
 rec_types <- c('Broad, abstract, or vague',
                'Specific but not actionable',
                'Specific and actionable',
@@ -63,8 +67,11 @@ rec_types <- c('Broad, abstract, or vague',
                NA,
                'No recommendation')
 
-american_regions <- c('South America', "North America", "Caribbean", 
-                                        "Central America, South America", 'Central America')
+american_regions <- c('South America', 
+                      "North America", 
+                      "Caribbean", 
+                      "Central America, South America",
+                      'Central America')
 
 periods <- c('Pleistocene',
              'Early-Mid Holocene',
@@ -141,7 +148,7 @@ dat <- dat_raw |>
 
 ## Simple Questions
 
-### 1.  How many publications do we have from each discipline?
+### 1. How many publications do we have from each discipline?
 
 ```{r tbl1}
 dat |>
@@ -151,7 +158,7 @@ dat |>
   bold_labels()
 ```
 
-### 2.  How many publications are from each region?
+### 2. How many publications are from each region?
 
 ```{r tbl2}
 dat |>
@@ -163,8 +170,7 @@ dat |>
 
 {{< pagebreak >}}
 
-
-### 3.  How many publications are from each period?
+### 3. How many publications are from each period?
 
 Note that N is larger here because each paper can cover multiple time periods.
 
@@ -177,7 +183,7 @@ dat |>
   bold_labels()
 ```
 
-### 4.  How many of our publications use methods that are quantitative, statistical, both, or neither?
+### 4. How many of our publications use methods that are quantitative, statistical, both, or neither?
 
 ```{r tbl4}
 dat |>
@@ -187,7 +193,7 @@ dat |>
   bold_labels()
 ```
 
-### 5.  How many of our publications are original research, a literature review, or a response article?
+### 5. How many of our publications are original research, a literature review, or a response article?
 
 ```{r tbl5}
 dat |>
@@ -199,7 +205,7 @@ dat |>
 
 {{< pagebreak >}}
 
-### 6.  How many publications are books, "book/theses" (PhD theses), articles, or "chapter/articles" (book chapters)?
+### 6. How many publications are books, "book/theses" (PhD theses), articles, or "chapter/articles" (book chapters)?
 
 ```{r tbl6}
 dat |>
@@ -219,7 +225,7 @@ dat |>
   bold_labels()
 ```
 
-### 8.  How many of our publications include lessons for the present/future?
+### 8. How many of our publications include lessons for the present/future?
 
 ```{r tbl8}
 dat |>
@@ -229,9 +235,9 @@ dat |>
   bold_labels()
 ```
 
-### 9.  What types of lessons or recommendations are most common?
+### 9. What types of lessons or recommendations are most common?
 
-Note, some papers can have multiple recommendation types. This analysis counts those separately (like we do for periods) so our N is greater than the number of articles. We could do it the other way too (treating papers with multiple rec types as separate categories) if necessary though.
+Note, some papers can have multiple recommendation types. This analysis counts those separately (like we do for periods) so our N is greater than the number of articles.
 
 ```{r tbl9}
 dat |>
@@ -245,8 +251,6 @@ dat |>
 {{< pagebreak >}}
 
 ### 10. Among lessons (so leaving out "none of the above") what types of lessons or recommendations are most common?
-
-Note -- this table suggests there is one row where the recommendation tags are mismatched -- double check!
 
 ```{r tbl10}
 dat |>
@@ -291,66 +295,6 @@ dat |>
 
 {{< pagebreak >}}
 
-### Figures for simple questions
-
-#### Figure 1: a chart/graph showing answers to questions 1-3.
-
-```{r fig1, fig.width = 10.5, fig.asp = .3}
-a <- dat |>
-  count(discipline) |>
-  ggplot(aes(reorder(discipline, n), n)) +
-  geom_col() +
-  coord_flip() +
-  labs(title = "Discipline",
-       x = "",
-       y = "Publications")
-
-b <- dat |>
-  count(region) |>
-  ggplot(aes(reorder(region, n), n)) +
-  geom_col() +
-  coord_flip() +
-  labs(title = "Region",
-       x = "",
-       y = "Publications")
-
-c <- dat |>
-  select(period) |>
-  unnest(period) |>
-  count(period) |>
-  ggplot(aes(period, n)) +
-  geom_col() +
-  coord_flip() +
-  labs(title = "Period",
-       x = "",
-       y = "Publications")
-
-a + b + c
-```
-Here's another possible visualization, a waffle plot, just for reference.
-```{r}
-library(waffle)
-dat |>
-  count(discipline) |>
-  ggplot(aes(fill = discipline, values = n)) +
-  geom_waffle(make_proportional = TRUE) +
-  scale_fill_brewer(palette = 'Spectral') +
-  theme_void()
-```
-And likewise, a treemap.
-```{r}
-library(treemapify)
-dat |>
-  count(discipline) |>
-  ggplot(aes(area = n, fill = discipline, label = discipline)) +
-  geom_treemap() +
-    geom_treemap_text(fontface = "italic", colour = "black", place = "centre",
-                    grow = TRUE) +
-  scale_fill_brewer(palette = 'Spectral')
-```
-
-{{< pagebreak >}}
-
 #### Figure 2: a chart/graph showing answers to questions 4-6.
 
 ```{r fig2, fig.width = 10.5, fig.asp = .3}
@@ -381,7 +325,6 @@ f <- dat |>
 
 d + e + f
 ```
-
 
 #### Figure 3: a chart/graph showing answers to questions 7-9.
 
@@ -418,6 +361,7 @@ i <- dat |>
 
 g + h + i
 ```
+
 {{< pagebreak >}}
 
 ## Compound Questions
@@ -473,7 +417,6 @@ dat |>
 
 ### 3b. What percentage of publications from each period use AGW to argue for their importance?
 
-Again, doing it both ways so we have them for reference.
 ```{r}
 dat |>
   select(period, agw) |>
@@ -482,7 +425,6 @@ dat |>
   modify_header(label = "**Variable**") |>
   add_p()
 ```
-
 
 ### 4. What percentage of publications that cover each region use global warming to argue for their significance?
 
@@ -496,7 +438,7 @@ dat |>
 
 {{< pagebreak >}}
 
-### 5.  What percentage of publications that include lessons come from each discipline? What percentage comes from each method?
+### 5. What percentage of publications that include lessons come from each discipline? What percentage comes from each method?
 
 ```{r}
 dat |>
@@ -527,8 +469,7 @@ dat |>
   add_p()
 ```
 
-
-### 7.  What percentage of publications that include lessons focus on each region and period?
+### 7. What percentage of publications that include lessons focus on each region and period?
 
 ```{r}
 dat |>
@@ -539,8 +480,6 @@ dat |>
   add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
-There might be better ways do this, need to think through how multi-counting papers impacts significance!
-
 ```{r}
 dat |>
   select(period, rec) |>
@@ -549,7 +488,6 @@ dat |>
   modify_header(label = "**Variable**") |>
   add_p()
 ```
-
 
 ### 8a. What percentage of publications from each region include lessons for the present/future?
 
@@ -582,6 +520,7 @@ dat |>
   modify_header(label = "**Variable**") |>
   add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
+
 {{< pagebreak >}}
 
 ### 9b. What percentage of publications in each method include distinct types of recommendation?
@@ -652,7 +591,6 @@ dat |>
   add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
-
 Broken down by period:
 
 ```{r}
@@ -664,7 +602,6 @@ dat |>
   modify_header(label = "**Variable**") |>
   add_p() 
 ```
-
 
 Broken down by method:
 
@@ -699,7 +636,6 @@ dat |>
   modify_header(label = "**Variable**") |>
   add_p()
 ```
-
 
 ### 12. Are there journals which are particularly correlated with including lessons for the present/future?
 
@@ -759,348 +695,3 @@ dat |>
   add_p(test.args = all_tests("fisher.test") ~ list(simulate.p.value=TRUE))
 ```
 
-{{< pagebreak >}}
-
-## Figures for compound questions
-
-### Figure 1: a chart/graph showing answers to questions 1-2. 
-
-```{r fig.width = 10.5, fig.asp = .3}
-a <- dat |>
-  ggplot(aes(discipline)) +
-  geom_bar(aes(fill = agw), position = "fill") +
-    scale_fill_grey(start = 0.8, end = 0.2) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Discipline",
-       x = "",
-       y = "Percentage of Publications",
-       fill = "Use AGW")
-
-b <- dat |>
-  ggplot(aes(method)) +
-  geom_bar(aes(fill = agw), position = "fill") +
-  scale_fill_grey(start = 0.8, end = 0.2) +
-  labs(title = "Method",
-       x = "",
-       y = "",
-       fill = "Use AGW")
-
-a + b + plot_layout(guides = 'collect')
-```
-Here's a different way to plot the same data:
-
-```{r fig.width = 10.5, fig.asp = .3}
-a <- dat |>
-  ggplot(aes(discipline)) +
-  geom_bar(aes(fill = agw)) +
-    scale_fill_grey(start = 0.8, end = 0.2) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Discipline",
-       x = "",
-       y = "Percentage of Publications",
-       fill = "Use AGW")
-
-b <- dat |>
-  ggplot(aes(method)) +
-  geom_bar(aes(fill = agw)) +
-  scale_fill_grey(start = 0.8, end = 0.2) +
-  labs(title = "Method",
-       x = "",
-       y = "",
-       fill = "Use AGW")
-
-a + b + plot_layout(guides = 'collect')
-```
-
-{{< pagebreak >}}
-
-
-### Figure 2: a chart/graph showing answers to questions 3-4. 
-
-
-```{r fig.width = 10.5, fig.asp = .3}
-c <- dat |>
-  ggplot(aes(region)) +
-  geom_bar(aes(fill = agw), position = "fill") +
-    scale_fill_grey(start = 0.8, end = 0.2) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Region",
-       x = "",
-       y = "Percentage of Publications",
-       fill = "Use AGW")
-
-d <- dat |>
-  select(period, agw) |>
-  unnest(period) |>
-  ggplot(aes(period)) +
-  geom_bar(aes(fill = agw), position = "fill") +
-    scale_fill_grey(start = 0.8, end = 0.2) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Period",
-       x = "",
-       y = "Percentage of Publications",
-       fill = "Use AGW")
-
-c + d + plot_layout(guides = 'collect')
-```
-```{r fig.width = 10.5, fig.asp = .3}
-
-c <- dat |>
-  ggplot(aes(region)) +
-  geom_bar(aes(fill = agw)) +
-    scale_fill_grey(start = 0.8, end = 0.2, guide = NULL) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Region",
-       x = "",
-       y = "Percentage of Publications",
-       fill = "Use AGW")
-
-d <- dat |>
-  select(period, agw) |>
-  unnest(period) |>
-  ggplot(aes(period)) +
-  geom_bar(aes(fill = agw)) +
-    scale_fill_grey(start = 0.8, end = 0.2) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Period",
-       x = "",
-       y = "Percentage of Publications",
-       fill = "Use AGW")
-
-c + d + plot_layout(guides = 'collect')
-```
-
-{{< pagebreak >}}
-
-### Figure 3: a chart/graph showing answers to questions 5-6. 
-
-Exploring other ways to visualize this:
-```{r}
-dat |>
-  ggplot(aes(rec)) +
-  geom_bar(aes(fill = discipline)) +
-    scale_fill_brewer(palette = 'Spectral') +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Includes lessons or recommendations",
-       x = "",
-       y = "Publications",
-       fill = "Discipline")
-
-dat |>
-  ggplot(aes(rec)) +
-  geom_bar(aes(fill = discipline), position = 'fill') +
-    scale_fill_brewer(palette = 'Spectral') +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Includes lessons or recommendations",
-       x = "",
-       y = "Proportion",
-       fill = "Discipline")
-
-dat |>
-  filter(rec == 'Yes') |>
-  count(discipline) |>
-  ggplot(aes(area = n, fill = discipline, label = discipline)) +
-  geom_treemap(color = 'white') +
-    geom_treemap_text(fontface = "italic", colour = "black", place = "centre",
-                    grow = FALSE) +
-  scale_fill_brewer(palette = 'Spectral', guide = NULL) +
-  labs(title = "Includes lessons or recommendations",
-       fill = "Discipline") +
-  coord_fixed()
-```
-[Maybe a donut chart would be another option for these?](https://r-charts.com/part-whole/donut-chart/). Just need to avoid pie charts . . .
-
-```{r}
-dat |>
-  ggplot(aes(rec)) +
-  geom_bar(aes(fill = method)) +
-    scale_fill_brewer(palette = 'Spectral') +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Includes lessons or recommendations",
-       x = "",
-       y = "Publications",
-       fill = "method")
-
-dat |>
-  ggplot(aes(rec)) +
-  geom_bar(aes(fill = method), position = 'fill') +
-    scale_fill_brewer(palette = 'Spectral') +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Includes lessons or recommendations",
-       x = "",
-       y = "Proportion",
-       fill = "method")
-
-dat |>
-  filter(rec == 'Yes') |>
-  count(method) |>
-  ggplot(aes(area = n, fill = method, label = method)) +
-  geom_treemap(color = 'white') +
-    geom_treemap_text(fontface = "italic", colour = "black", place = "centre",
-                    grow = FALSE) +
-  scale_fill_brewer(palette = 'Spectral', guide = NULL) +
-  labs(title = "Includes lessons or recommendations",
-       fill = "method") +
-  coord_fixed()
-```
-```{r fig.width = 10.5, fig.asp = .3}
-e <- dat |>
-  ggplot(aes(discipline)) +
-  geom_bar(aes(fill = rec)) +
-    scale_fill_grey(start = 0.8, end = 0.2, guide = NULL) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Discipline",
-       x = "",
-       y = "Publications",
-       fill = "Recommendations")
-
-f <- dat |>
-  ggplot(aes(method)) +
-  geom_bar(aes(fill = rec)) +
-    scale_fill_grey(start = 0.8, end = 0.2) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Method",
-       x = "",
-       y = "",
-       fill = "Recommendations")
-
-e + f + plot_layout(guides = 'collect')
-```
-
-```{r fig.width = 10.5, fig.asp = .3}
-e <- dat |>
-  ggplot(aes(discipline)) +
-  geom_bar(aes(fill = rec), position = 'fill') +
-    scale_fill_grey(start = 0.8, end = 0.2, guide = NULL) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Discipline",
-       x = "",
-       y = "Publications",
-       fill = "Recommendations")
-
-f <- dat |>
-  ggplot(aes(method)) +
-  geom_bar(aes(fill = rec), position = 'fill') +
-    scale_fill_grey(start = 0.8, end = 0.2) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Method",
-       x = "",
-       y = "",
-       fill = "Recommendations")
-
-e + f + plot_layout(guides = 'collect')
-```
-{{< pagebreak >}}
-
-### Figure 4: a chart/graph showing answers to question 7.
-
-```{r fig.width = 10.5, fig.asp = .3}
-e <- dat |>
-  ggplot(aes(region)) +
-  geom_bar(aes(fill = rec)) +
-    scale_fill_grey(start = 0.8, end = 0.2, guide = NULL) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Region",
-       x = "",
-       y = "Publications",
-       fill = "Recommendations")
-
-f <- dat |>
-  select(rec, period) |>
-  unnest(period) |>
-  ggplot(aes(period)) +
-  geom_bar(aes(fill = rec)) +
-    scale_fill_grey(start = 0.8, end = 0.2) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Period",
-       x = "",
-       y = "",
-       fill = "Recommendations")
-
-e + f + plot_layout(guides = 'collect')
-```
-
-```{r fig.width = 10.5, fig.asp = .3}
-e <- dat |>
-  ggplot(aes(region)) +
-  geom_bar(aes(fill = rec), position = 'fill') +
-    scale_fill_grey(start = 0.8, end = 0.2, guide = NULL) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Region",
-       x = "",
-       y = "Publications",
-       fill = "Recommendations")
-
-f <- dat |>
-  select(rec, period) |>
-  unnest(period) |>
-  ggplot(aes(period)) +
-  geom_bar(aes(fill = rec), position = 'fill') +
-    scale_fill_grey(start = 0.8, end = 0.2) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Period",
-       x = "",
-       y = "",
-       fill = "Recommendations")
-
-e + f + plot_layout(guides = 'collect')
-```
-
-### Figure 5: a chart/ graph showing answers to question 8.
-
-```{r fig.width = 10.5, fig.asp = .3}
-e <- dat |>
-  ggplot(aes(region)) +
-  geom_bar(aes(fill = rec)) +
-    scale_fill_grey(start = 0.8, end = 0.2, guide = NULL) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Region",
-       x = "",
-       y = "Publications",
-       fill = "Recommendations")
-
-f <- dat |>
-  select(period, rec) |>
-  unnest(period) |>
-  ggplot(aes(period)) +
-  geom_bar(aes(fill = rec)) +
-    scale_fill_grey(start = 0.8, end = 0.2) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Period",
-       x = "",
-       y = "",
-       fill = "Recommendations")
-
-e + f + plot_layout(guides = 'collect')
-```
-{{< pagebreak >}}
-
-
-## Regression
-
-Testing different way to look at the data through logistic regression. How well do some of our categories do at predicting whether a paper includes recommendations for the future or not?
-
-This is just a test, but we can explore or expand this in various ways if useful.
-
-
-```{r}
-# should adjust baseline and try to incorporate more vars
-dat2 <- mutate(dat, rec_bin = rec == 'Yes')
-m1 <- glm(rec_bin ~ method + region + agw + discipline,
-          family = binomial, data = dat2)
-tbl_regression(m1)
-```
