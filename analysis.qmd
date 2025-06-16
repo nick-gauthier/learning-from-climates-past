@@ -4,6 +4,7 @@ subtitle: "Reproducible Data Analysis"
 author: Nicolas Gauthier
 date: last-modified
 date-format: "[Last updated:] MMMM D, YYYY"
+bibliography: grateful-refs.bib
 format: 
   typst:
     toc: true
@@ -22,9 +23,9 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 # Load required packages
 library(tidyverse) # for data manipulation
 library(readxl) # for pulling data from excel spreadsheet
-library(patchwork) # for combining plots
 library(gtsummary) # for summary tables
 library(labelled) # for informative variable names
+library(grateful) # for citing r packages
 
 theme_set(theme_bw()) # set default plot theme to black and white
 theme_gtsummary_compact(font_size = 11) # set default theme for tables
@@ -142,6 +143,12 @@ dat <- read_excel('Learning More Effectively Database.xlsx') |>
                       rec = 'Includes lessons',
                       rec_type = 'Recommendation Type'
   )
+```
+
+## Packages Used
+
+```{r}
+cite_packages(output = "paragraph", pkgs = 'Session', out.dir = '.')
 ```
 
 {{< pagebreak >}}
