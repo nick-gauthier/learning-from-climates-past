@@ -3,3 +3,12 @@
 .RData
 .Ruserdata
 .DS_Store
+
+.Renviron
+.quarto/
+*_cache/
+*_files/
+*.rmarkdown
+*.knit.md
+
+_local_archive/
