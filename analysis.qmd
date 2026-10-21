@@ -105,7 +105,7 @@ dat <- read_excel('Limits Database Final.xlsx', sheet = 'Database', range = cell
          period = `PERIOD (SEE SHEET 2)`,
          pub_type = `BOOK, THESIS, ARTICLE, CHAPTER?`,
          journal = `JOURNAL TITLE OR BOOK PUBLISHER`,
-         argument = `Publication Summary`,
+         argument = `SUMMARY (ONE SENTENCE)`,
          agw = `DOES ARTICLE USE MODERN ANTHROPOGENIC CLIMATE CHANGE TO ARGUE FOR ITS IMPORTANCE? (Y/N)`,
          rec = `DOES ARTICLE INCLUDE LESSONS OR RECOMMENDATIONS FOR THE PRESENT OR FUTURE (Y/N)?`,
          rec_type = `TYPE OF RECOMMENDATION (SEE SHEET 2)`,
